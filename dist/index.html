@@ -178,16 +178,6 @@
     .rationale strong { font-size: 11px; }
     .rationale p { margin-bottom: 0; }
 
-    .review-table { width: 100%; border-collapse: collapse; }
-    .review-table th, .review-table td {
-      padding: 12px 14px; border-bottom: 1px solid var(--line); text-align: left; font-size: 12px; vertical-align: top;
-    }
-    .review-table th { font-size: 10px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); background: var(--soft); }
-    .review-table tr:last-child td { border-bottom: 0; }
-    .review-actions { display: flex; gap: 6px; flex-wrap: wrap; }
-    .small-btn { border: 1px solid var(--line); background: white; border-radius: 8px; padding: 6px 8px; font-size: 10px; color: var(--ink); }
-    .small-btn:hover { border-color: #76a5c1; background: var(--blue-soft); }
-
     @media (max-width: 1100px) {
       .workspace { grid-template-columns: 210px minmax(0, 1fr); }
       .evidence-panel { position: static; grid-column: 1 / -1; }
@@ -226,7 +216,6 @@
       </div>
       <nav class="side-nav" aria-label="Primary navigation">
         <button class="nav-btn active" data-view="trace">Trace Explorer</button>
-        <button class="nav-btn" data-view="review">Review Queue</button>
       </nav>
       <div class="study-card">
         <div class="eyebrow">Active study</div>
@@ -300,19 +289,6 @@
           </div>
         </section>
 
-        <section id="view-review" class="view" hidden>
-          <div class="panel">
-            <div class="panel-head"><h2>Review queue</h2><p>Candidate links that require a programmer or statistician decision.</p></div>
-            <table class="review-table">
-              <thead><tr><th>Candidate link</th><th>Issue</th><th>Status</th><th>Action</th></tr></thead>
-              <tbody>
-                <tr><td>aCRF AETOXGR → Raw AE.AESEV</td><td>Different variable names; derivation or rename is not documented in metadata.</td><td><span class="status candidate">Needs review</span></td><td><div class="review-actions"><button class="small-btn">Accept</button><button class="small-btn">Edit</button><button class="small-btn">Reject</button></div></td></tr>
-                <tr><td>Raw AE.AESER → ADAE.AESER</td><td>Names match, but formal ADaM derivation specification was not supplied.</td><td><span class="status candidate">Candidate</span></td><td><div class="review-actions"><button class="small-btn">Accept</button><button class="small-btn">Edit</button></div></td></tr>
-                <tr><td>SPI-515 shell → SPI-611 output</td><td>The uploaded standalone shell is for SPI-515; SPI-611 shells embedded in SAP are used instead.</td><td><span class="status gap">Not used</span></td><td><div class="review-actions"><button class="small-btn">Confirm</button></div></td></tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
       </div>
     </main>
   </div>
@@ -612,15 +588,6 @@
     document.getElementById("variable-search").addEventListener("input", renderVariables);
     document.getElementById("dataset-filter").addEventListener("change", renderVariables);
     document.getElementById("coverage-filter").addEventListener("change", renderVariables);
-    document.querySelectorAll(".nav-btn").forEach(btn => btn.addEventListener("click", () => {
-      document.querySelectorAll(".nav-btn").forEach(x => x.classList.toggle("active", x === btn));
-      document.querySelectorAll(".view").forEach(view => view.hidden = view.id !== `view-${btn.dataset.view}`);
-    }));
-    document.querySelectorAll(".review-actions button").forEach(btn => btn.addEventListener("click", () => {
-      btn.textContent = "Saved";
-      btn.disabled = true;
-    }));
-
     loadMetadata();
   </script>
 </body>
