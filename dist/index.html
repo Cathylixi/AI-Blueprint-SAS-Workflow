@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="SPI-611 clinical traceability prototype">
+  <title>Clinical Blueprint</title>
+  <style>
+    :root {
+      --ink: #152238;
+      --muted: #637083;
+      --line: #d8e0e8;
+      --soft: #f4f7fa;
+      --blue: #174e77;
+      --blue-2: #216b9a;
+      --blue-soft: #eaf3f8;
+      --teal: #17827d;
+      --amber: #a76810;
+      --amber-soft: #fff5df;
+      --red: #a83d3d;
+      --red-soft: #fff0ef;
+      --green: #287455;
+      --green-soft: #e9f6ef;
+      --white: #ffffff;
+      --shadow: 0 14px 34px rgba(24, 56, 80, .09);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, Aptos, "Segoe UI", Arial, sans-serif;
+      color: var(--ink);
+      background: #eef3f6;
+    }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+
+    .app-shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 248px minmax(0, 1fr);
+    }
+    .sidebar {
+      background: #103b5a;
+      color: white;
+      padding: 26px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+    .brand { display: flex; gap: 12px; align-items: center; }
+    .brand-mark {
+      width: 38px; height: 38px; border-radius: 11px;
+      display: grid; place-items: center;
+      background: linear-gradient(145deg, #fff, #cde8f4);
+      color: #174e77; font-weight: 800;
+    }
+    .brand strong { display: block; font-size: 15px; }
+    .brand span { display: block; color: #b9d3e2; font-size: 12px; margin-top: 3px; }
+    .side-nav { display: grid; gap: 7px; }
+    .nav-btn {
+      border: 0; border-radius: 11px; padding: 11px 12px;
+      text-align: left; color: #d6e7f0; background: transparent;
+      transition: .15s ease;
+    }
+    .nav-btn:hover, .nav-btn.active { background: rgba(255,255,255,.13); color: white; }
+    .study-card {
+      margin-top: auto; padding: 15px; border: 1px solid rgba(255,255,255,.18);
+      border-radius: 14px; background: rgba(255,255,255,.07);
+    }
+    .study-card .eyebrow { color: #a8c8da; }
+    .study-card strong { display: block; margin: 5px 0 6px; }
+    .study-card p { color: #c4d9e5; font-size: 12px; line-height: 1.45; margin: 0; }
+
+    .main { min-width: 0; }
+    .topbar {
+      height: 76px; padding: 0 30px; background: white; border-bottom: 1px solid var(--line);
+      display: flex; align-items: center; justify-content: space-between; gap: 18px;
+    }
+    .topbar h1 { font-size: 20px; margin: 0; font-weight: 650; }
+    .topbar p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+    .top-status { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+    .pill { border-radius: 999px; padding: 6px 9px; font-size: 11px; font-weight: 650; }
+    .pill.green { background: var(--green-soft); color: var(--green); }
+    .pill.blue { background: var(--blue-soft); color: var(--blue); }
+    .pill.amber { background: var(--amber-soft); color: var(--amber); }
+
+    .page { padding: 24px 30px 40px; }
+    .view[hidden] { display: none; }
+    .eyebrow { text-transform: uppercase; letter-spacing: .11em; font-size: 10px; font-weight: 750; color: var(--blue-2); }
+
+    .metrics {
+      display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px;
+    }
+    .metric { background: white; border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+    .metric span { display: block; color: var(--muted); font-size: 11px; }
+    .metric strong { display: block; font-size: 21px; margin-top: 3px; }
+
+    .workspace { display: grid; grid-template-columns: 235px minmax(0, 1fr) 310px; gap: 16px; align-items: start; }
+    .panel { background: white; border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+    .panel-head { padding: 17px 18px 12px; border-bottom: 1px solid var(--line); }
+    .panel-head h2 { margin: 0; font-size: 14px; }
+    .panel-head p { margin: 5px 0 0; font-size: 11px; color: var(--muted); line-height: 1.4; }
+
+    .variable-panel { position: sticky; top: 18px; overflow: hidden; }
+    .search-wrap { padding: 12px 12px 5px; }
+    .search-wrap input {
+      width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 9px 10px; color: var(--ink);
+      background: var(--soft); outline: none;
+    }
+    .search-wrap input:focus { border-color: #6da6c8; box-shadow: 0 0 0 3px #e4f0f7; }
+    .variable-list { padding: 6px 8px 12px; display: grid; gap: 5px; }
+    .variable {
+      width: 100%; border: 0; border-radius: 10px; padding: 10px 11px; background: transparent;
+      text-align: left; color: var(--ink);
+    }
+    .variable:hover { background: var(--soft); }
+    .variable.active { background: var(--blue-soft); color: var(--blue); }
+    .variable code { font-weight: 750; font-size: 12px; }
+    .variable span { display: block; margin-top: 3px; font-size: 10px; color: var(--muted); }
+    .variable.active span { color: #527c97; }
+
+    .trace-panel { padding-bottom: 18px; overflow: hidden; }
+    .trace-title { padding: 18px 20px 8px; display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+    .trace-title h2 { margin: 2px 0 0; font-size: 19px; }
+    .trace-title p { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
+    .trace-grid { padding: 8px 20px 10px; display: grid; gap: 8px; }
+    .trace-node {
+      border: 1px solid var(--line); background: white; border-radius: 13px; padding: 12px 14px;
+      display: grid; grid-template-columns: 110px 1fr auto; gap: 12px; align-items: center; text-align: left;
+      color: var(--ink); transition: .16s ease; position: relative;
+    }
+    .trace-node:not(:last-child)::after {
+      content: ""; position: absolute; left: 56px; bottom: -9px; width: 2px; height: 9px; background: #a8bbc8;
+    }
+    .trace-node:hover, .trace-node.active { border-color: #72a8c8; background: #f7fbfd; transform: translateY(-1px); }
+    .node-type { font-size: 10px; font-weight: 750; color: var(--blue-2); text-transform: uppercase; letter-spacing: .08em; }
+    .node-copy strong { font-size: 13px; display: block; }
+    .node-copy span { font-size: 11px; color: var(--muted); display: block; margin-top: 3px; line-height: 1.35; }
+    .status { font-size: 10px; font-weight: 700; border-radius: 999px; padding: 5px 7px; white-space: nowrap; }
+    .status.verified { background: var(--green-soft); color: var(--green); }
+    .status.candidate { background: var(--amber-soft); color: var(--amber); }
+    .status.gap { background: var(--red-soft); color: var(--red); }
+
+    .mini-shell { margin: 10px 20px 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+    .mini-shell .shell-head { padding: 10px 12px; background: #173f5f; color: white; font-size: 11px; font-weight: 700; }
+    .shell-row { display: grid; grid-template-columns: 1fr 110px 110px; border-top: 1px solid var(--line); }
+    .shell-row > div { padding: 8px 10px; font-size: 10px; border-left: 1px solid var(--line); }
+    .shell-row > div:first-child { border-left: 0; }
+    .shell-row.head { background: var(--soft); font-weight: 700; color: var(--muted); }
+    .shell-row.highlight { background: #fff8e9; font-weight: 700; color: #805317; }
+
+    .evidence-panel { position: sticky; top: 18px; overflow: hidden; }
+    .evidence-body { padding: 16px 18px 20px; }
+    .evidence-ref { color: var(--blue-2); font-size: 11px; font-weight: 750; }
+    .evidence-body h3 { font-size: 16px; margin: 7px 0 7px; }
+    .evidence-body p { font-size: 12px; color: var(--muted); line-height: 1.55; }
+    .quote { border-left: 3px solid #71a8c7; padding: 10px 0 10px 12px; margin: 14px 0; color: #344357; font-size: 12px; line-height: 1.55; }
+    mark { background: #fff0b6; padding: 1px 2px; color: inherit; }
+    .evidence-meta { display: grid; gap: 8px; margin-top: 15px; }
+    .meta-row { display: grid; grid-template-columns: 78px 1fr; gap: 8px; font-size: 11px; }
+    .meta-row span:first-child { color: var(--muted); }
+    .rationale { margin-top: 15px; padding-top: 13px; border-top: 1px solid var(--line); }
+    .rationale strong { font-size: 11px; }
+    .rationale p { margin-bottom: 0; }
+
+    .coverage-grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 16px; }
+    .artifact-table, .review-table { width: 100%; border-collapse: collapse; }
+    .artifact-table th, .artifact-table td, .review-table th, .review-table td {
+      padding: 12px 14px; border-bottom: 1px solid var(--line); text-align: left; font-size: 12px; vertical-align: top;
+    }
+    .artifact-table th, .review-table th { font-size: 10px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); background: var(--soft); }
+    .artifact-table tr:last-child td, .review-table tr:last-child td { border-bottom: 0; }
+    .note-list { padding: 18px 22px 20px; margin: 0; color: var(--muted); font-size: 12px; line-height: 1.65; }
+    .review-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+    .small-btn { border: 1px solid var(--line); background: white; border-radius: 8px; padding: 6px 8px; font-size: 10px; color: var(--ink); }
+    .small-btn:hover { border-color: #76a5c1; background: var(--blue-soft); }
+
+    @media (max-width: 1100px) {
+      .workspace { grid-template-columns: 210px minmax(0, 1fr); }
+      .evidence-panel { position: static; grid-column: 1 / -1; }
+      .evidence-body { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+      .rationale { margin-top: 0; padding-top: 0; border-top: 0; }
+    }
+    @media (max-width: 780px) {
+      .app-shell { display: block; }
+      .sidebar { padding: 15px; gap: 14px; }
+      .side-nav { grid-template-columns: repeat(3, 1fr); }
+      .study-card { display: none; }
+      .topbar { height: auto; padding: 17px 18px; align-items: flex-start; }
+      .page { padding: 16px; }
+      .metrics { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .workspace { grid-template-columns: 1fr; }
+      .variable-panel, .evidence-panel { position: static; }
+      .variable-list { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .evidence-body { display: block; }
+      .trace-node { grid-template-columns: 85px 1fr; }
+      .trace-node .status { grid-column: 2; justify-self: start; }
+      .coverage-grid { grid-template-columns: 1fr; }
+      .shell-row { grid-template-columns: 1fr 82px 82px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">CB</div>
+        <div><strong>Clinical Blueprint</strong><span>Traceability prototype</span></div>
+      </div>
+      <nav class="side-nav" aria-label="Primary navigation">
+        <button class="nav-btn active" data-view="trace">Trace Explorer</button>
+        <button class="nav-btn" data-view="artifacts">Artifact Map</button>
+        <button class="nav-btn" data-view="review">Review Queue</button>
+      </nav>
+      <div class="study-card">
+        <div class="eyebrow">Active study</div>
+        <strong>SPI-611</strong>
+        <p>Phase 3 bladder cancer study<br>Protocol Amendment 6</p>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h1>SPI-611 Study Blueprint</h1>
+          <p>Protocol, aCRF, metadata, SAP and planned outputs</p>
+        </div>
+        <div class="top-status">
+          <span class="pill green">5 source artifacts loaded</span>
+          <span class="pill amber">3 links need review</span>
+        </div>
+      </header>
+
+      <div class="page">
+        <section id="view-trace" class="view">
+          <div class="metrics" aria-label="Source summary">
+            <div class="metric"><span>Protocol</span><strong>56 pages</strong></div>
+            <div class="metric"><span>aCRF</span><strong>108 pages</strong></div>
+            <div class="metric"><span>Metadata</span><strong>1,043 variables</strong></div>
+            <div class="metric"><span>Datasets</span><strong>43</strong></div>
+          </div>
+
+          <div class="workspace">
+            <section class="panel variable-panel" aria-label="Variables">
+              <div class="panel-head"><h2>Variables</h2><p>Select an item to rebuild the evidence chain.</p></div>
+              <div class="search-wrap"><input id="variable-search" type="search" placeholder="Search variable" aria-label="Search variables"></div>
+              <div id="variable-list" class="variable-list"></div>
+            </section>
+
+            <section class="panel trace-panel">
+              <div class="trace-title">
+                <div><div class="eyebrow">Selected trace</div><h2 id="trace-title">Serious adverse event</h2><p id="trace-subtitle">Reverse trace from planned output to protocol evidence</p></div>
+                <span id="trace-status" class="pill green">6 verified links</span>
+              </div>
+              <div id="trace-grid" class="trace-grid" aria-label="Trace chain"></div>
+              <div class="mini-shell" aria-label="Mock shell preview">
+                <div id="shell-title" class="shell-head">Table 14.3.1.1.1.1 Overall Summary of Treatment Emergent Adverse Events</div>
+                <div class="shell-row head"><div>Planned row</div><div>EOquin n (%)</div><div>Placebo n (%)</div></div>
+                <div class="shell-row"><div>Patients with any treatment emergent AE</div><div>xx (xx.x)</div><div>xx (xx.x)</div></div>
+                <div id="shell-active-row" class="shell-row highlight"><div>Patients with any serious AE</div><div>xx (xx.x)</div><div>xx (xx.x)</div></div>
+              </div>
+            </section>
+
+            <aside class="panel evidence-panel" aria-live="polite">
+              <div class="panel-head"><h2>Source evidence</h2><p>Exact document anchor for the selected node.</p></div>
+              <div id="evidence-body" class="evidence-body"></div>
+            </aside>
+          </div>
+        </section>
+
+        <section id="view-artifacts" class="view" hidden>
+          <div class="coverage-grid">
+            <div class="panel">
+              <div class="panel-head"><h2>Artifact coverage</h2><p>Files currently available for the prototype.</p></div>
+              <table class="artifact-table">
+                <thead><tr><th>Artifact</th><th>Source</th><th>Coverage</th></tr></thead>
+                <tbody>
+                  <tr><td>Protocol</td><td>SPI-611 Amendment 6</td><td><span class="status verified">Section anchors</span></td></tr>
+                  <tr><td>aCRF</td><td>SPI-611 annotated CRF</td><td><span class="status verified">Field and bbox anchors</span></td></tr>
+                  <tr><td>Metadata</td><td>metadata.xlsx</td><td><span class="status verified">43 datasets</span></td></tr>
+                  <tr><td>SAP</td><td>SPI-611 SAP 3.0</td><td><span class="status verified">Rule and shell anchors</span></td></tr>
+                  <tr><td>Mock shell reference</td><td>SPI-515 mock tables</td><td><span class="status candidate">Cross-study reference</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><h2>Prototype rules</h2><p>What is treated as evidence in this version.</p></div>
+              <ul class="note-list">
+                <li>Protocol and SAP links resolve to a section and page.</li>
+                <li>CRF links resolve to an annotated field on a specific page.</li>
+                <li>Raw and analysis variables come from metadata.xlsx.</li>
+                <li>SDTM nodes use aCRF annotations when a separate mapping spec is unavailable.</li>
+                <li>SPI-611 mock outputs embedded in the SAP take precedence over the SPI-515 reference shell.</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section id="view-review" class="view" hidden>
+          <div class="panel">
+            <div class="panel-head"><h2>Review queue</h2><p>Candidate links that require a programmer or statistician decision.</p></div>
+            <table class="review-table">
+              <thead><tr><th>Candidate link</th><th>Issue</th><th>Status</th><th>Action</th></tr></thead>
+              <tbody>
+                <tr><td>aCRF AETOXGR → Raw AE.AESEV</td><td>Different variable names; derivation or rename is not documented in metadata.</td><td><span class="status candidate">Needs review</span></td><td><div class="review-actions"><button class="small-btn">Accept</button><button class="small-btn">Edit</button><button class="small-btn">Reject</button></div></td></tr>
+                <tr><td>Raw AE.AESER → ADAE.AESER</td><td>Names match, but formal ADaM derivation specification was not supplied.</td><td><span class="status candidate">Candidate</span></td><td><div class="review-actions"><button class="small-btn">Accept</button><button class="small-btn">Edit</button></div></td></tr>
+                <tr><td>SPI-515 shell → SPI-611 output</td><td>The uploaded standalone shell is for SPI-515; SPI-611 shells embedded in SAP are used instead.</td><td><span class="status gap">Not used</span></td><td><div class="review-actions"><button class="small-btn">Confirm</button></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const traces = {
+      AESER: {
+        label: "Serious adverse event",
+        subtitle: "AE.AESER → ADAE.AESER → overall TEAE summary",
+        status: "6 verified links",
+        row: "Patients with any serious AE",
+        nodes: [
+          {type:"Protocol", title:"Sections 11.1.2 and 12.5.2", detail:"Serious AE definition and required safety summary", ref:"Protocol Amendment 6 · pp. 35 and 42", quote:"A serious adverse event is an AE that meets at least one defined criterion. Deaths and other SAEs will be listed and summarized.", highlight:"serious adverse event", status:"verified", rationale:"The protocol defines the clinical concept and requires SAE summaries."},
+          {type:"CRF", title:"Adverse Events form · Serious?", detail:"Yes / No field on AE form", ref:"aCRF · page 55 · Adverse Events #097", quote:"Serious? Yes (Notify Sponsor) / No", highlight:"Serious?", status:"verified", rationale:"The CRF field directly captures whether the event is serious."},
+          {type:"Raw", title:"AE.AESER", detail:"Numeric · BEST format · variable order 22", ref:"metadata.xlsx · AE row 22", quote:"Dataset AE · Variable AESER · Type Numeric", highlight:"AESER", status:"verified", rationale:"The raw metadata contains the variable annotated beside the CRF field."},
+          {type:"SDTM", title:"AE.AESER", detail:"aCRF domain and variable annotation", ref:"aCRF annotation · page 55", quote:"Domain AE · AESER", highlight:"AESER", status:"verified", rationale:"The annotated CRF explicitly assigns the field to AE.AESER."},
+          {type:"ADaM", title:"ADAE.AESER", detail:"Analysis AE variable; SAFETY and treatment fields available", ref:"metadata.xlsx · ADAE rows 24, 49–54", quote:"ADAE includes AESER, TRTDESC, TRTADESC and SAFETY.", highlight:"AESER", status:"candidate", rationale:"The analysis dataset carries AESER forward. A formal derivation spec is still needed to verify the transformation."},
+          {type:"SAP", title:"Sections 5.4 and 5.10.3", detail:"Safety population and AE analysis rules", ref:"SAP 3.0 · pp. 8 and 17", quote:"Safety analysis will include treated randomized patients. Serious adverse events will be listed by patient.", highlight:"Serious adverse events", status:"verified", rationale:"The SAP defines both the population and the analysis of serious AEs."},
+          {type:"Shell", title:"Table 14.3.1.1.1.1", detail:"Overall Summary of Treatment Emergent Adverse Events", ref:"SAP 3.0 · page 54", quote:"Patients with any serious AE · n (%) by treatment group", highlight:"Patients with any serious AE", status:"verified", rationale:"The planned row is the downstream presentation of the serious AE concept."}
+        ]
+      },
+      AETERM: {
+        label: "Adverse event term",
+        subtitle: "CRF term → AE.AETERM → coded SOC and PT output",
+        status: "6 verified links",
+        row: "Patients having at least one AE",
+        nodes: [
+          {type:"Protocol", title:"Section 11.3", detail:"Recording adverse events", ref:"Protocol Amendment 6 · page 37", quote:"All AEs, regardless of whether or not ascribed to the investigational product, should be recorded in the CRF.", highlight:"recorded in the CRF", status:"verified", rationale:"The protocol requires the event description to be recorded."},
+          {type:"CRF", title:"Adverse Event Term", detail:"Free-text event description", ref:"aCRF · page 55", quote:"Adverse Event Term", highlight:"Adverse Event Term", status:"verified", rationale:"This is the source field for the reported event term."},
+          {type:"Raw", title:"AE.AETERM", detail:"Character variable · order 4", ref:"metadata.xlsx · AE row 4", quote:"Dataset AE · Variable AETERM · Type Character", highlight:"AETERM", status:"verified", rationale:"Raw metadata contains the matching term variable."},
+          {type:"SDTM", title:"AE.AETERM", detail:"aCRF variable annotation", ref:"aCRF annotation · page 55", quote:"Domain AE · AETERM", highlight:"AETERM", status:"verified", rationale:"The aCRF maps the field directly to AETERM."},
+          {type:"ADaM", title:"ADAE.AETERM and coded terms", detail:"PT_NM, SOC_NM and coding hierarchy", ref:"metadata.xlsx · ADAE rows 8, 30–38", quote:"ADAE includes AETERM, PT_NM, SOC_NM and MedDRA code fields.", highlight:"PT_NM", status:"candidate", rationale:"The analysis dataset contains the reported term and coded hierarchy; coding provenance needs confirmation."},
+          {type:"SAP", title:"Section 5.10.3", detail:"Code by MedDRA and group by PT and SOC", ref:"SAP 3.0 · page 17", quote:"Adverse events will be coded using MedDRA and grouped by preferred term and system organ class.", highlight:"preferred term", status:"verified", rationale:"The SAP defines the coding and grouping method."},
+          {type:"Shell", title:"Table 14.3.1.1.2.1", detail:"TEAEs by SOC and PT", ref:"SAP 3.0 · page 55", quote:"System Organ Class / Preferred Term · Patients having at least one AE", highlight:"Preferred Term", status:"verified", rationale:"The output presents coded terms downstream of AETERM."}
+        ]
+      },
+      AESEV: {
+        label: "Adverse event severity",
+        subtitle: "Toxicity Grade annotation → AE.AESEV → worst severity shell",
+        status: "1 mapping gap",
+        row: "Patients with any Grade 3–4 treatment emergent AE",
+        nodes: [
+          {type:"Protocol", title:"Section 11.1.4", detail:"Severity grading criteria 1 through 5", ref:"Protocol Amendment 6 · pp. 36–37", quote:"The severity of an AE should be defined according to NCI Common Toxicity Criteria version 3.0.", highlight:"severity", status:"verified", rationale:"The protocol establishes the severity scale."},
+          {type:"CRF", title:"Toxicity Grade", detail:"Grades 1 Mild through 5 Fatal", ref:"aCRF · page 55", quote:"Toxicity Grade: 1 Mild, 2 Moderate, 3 Severe, 4 Life threatening, 5 Fatal", highlight:"Toxicity Grade", status:"verified", rationale:"The CRF captures the reported grade."},
+          {type:"Raw", title:"AE.AESEV", detail:"Numeric · BEST format · variable order 23", ref:"metadata.xlsx · AE row 23", quote:"Dataset AE · Variable AESEV · Type Numeric", highlight:"AESEV", status:"candidate", rationale:"The raw variable appears to hold severity, but the aCRF annotation uses a different name."},
+          {type:"SDTM", title:"AE.AETOXGR", detail:"aCRF annotation beside Toxicity Grade", ref:"aCRF annotation · page 55", quote:"AETOXGR", highlight:"AETOXGR", status:"gap", rationale:"The annotation is AETOXGR while raw metadata uses AESEV. This requires review."},
+          {type:"ADaM", title:"ADAE.AESEV", detail:"Analysis severity variable", ref:"metadata.xlsx · ADAE row 25", quote:"Dataset ADAE · Variable AESEV · Type Numeric", highlight:"AESEV", status:"candidate", rationale:"ADAE contains AESEV, but the formal derivation was not supplied."},
+          {type:"SAP", title:"Section 5.10.3", detail:"Grade by NCI CTCAE and summarize severity", ref:"SAP 3.0 · page 17", quote:"Adverse events will be graded according to NCI CTCAE version 3.0.", highlight:"graded", status:"verified", rationale:"The SAP confirms how severity is classified and summarized."},
+          {type:"Shell", title:"Table 14.3.1.1.4.1", detail:"TEAEs by SOC, PT and worst severity", ref:"SAP 3.0 · page 56", quote:"At Least One AE by Severity · Grades 1, 2, 3, 4, 5 and Total", highlight:"Severity", status:"verified", rationale:"The shell is the direct output for maximum severity."}
+        ]
+      },
+      AEREL: {
+        label: "Relationship to study drug",
+        subtitle: "CRF relationship → AE.AEREL → related AE output",
+        status: "6 verified links",
+        row: "Patients with any treatment related AE",
+        nodes: [
+          {type:"Protocol", title:"Section 11.1.3", detail:"Relationship classification", ref:"Protocol Amendment 6 · page 36", quote:"Possible, Probable, or Definite relationships are considered related to the investigational product.", highlight:"considered related", status:"verified", rationale:"The protocol defines the relationship categories."},
+          {type:"CRF", title:"Relationship to Study Drug", detail:"Unrelated through Definite", ref:"aCRF · page 55", quote:"Unrelated · Unlikely · Possible · Probable · Definite", highlight:"Possible", status:"verified", rationale:"The CRF records the investigator relationship assessment."},
+          {type:"Raw", title:"AE.AEREL", detail:"Numeric · BEST format · variable order 24", ref:"metadata.xlsx · AE row 24", quote:"Dataset AE · Variable AEREL · Type Numeric", highlight:"AEREL", status:"verified", rationale:"The raw metadata carries the annotated relationship field."},
+          {type:"SDTM", title:"AE.AEREL", detail:"aCRF variable annotation", ref:"aCRF annotation · page 55", quote:"Domain AE · AEREL", highlight:"AEREL", status:"verified", rationale:"The annotated CRF maps the field to AEREL."},
+          {type:"ADaM", title:"ADAE.AEREL", detail:"Analysis relationship variable", ref:"metadata.xlsx · ADAE row 26", quote:"Dataset ADAE · Variable AEREL · Type Numeric", highlight:"AEREL", status:"candidate", rationale:"ADAE carries AEREL; coding and derivation require formal confirmation."},
+          {type:"SAP", title:"Section 5.10.3", detail:"Treatment-related definition", ref:"SAP 3.0 · page 17", quote:"Treatment-related adverse events are TEAEs with possible, probable or definite relationship.", highlight:"possible, probable or definite", status:"verified", rationale:"The SAP converts relationship categories into the related-AE analysis rule."},
+          {type:"Shell", title:"Table 14.3.1.5.1", detail:"Related adverse events by SOC and PT", ref:"SAP 3.0 · page 57", quote:"Patients having at least one related AE", highlight:"related AE", status:"verified", rationale:"The shell displays the downstream related-AE result."}
+        ]
+      },
+      AEOUT: {
+        label: "Adverse event outcome",
+        subtitle: "CRF outcome → AE.AEOUT → event level analysis",
+        status: "5 verified links",
+        row: "Patients with any treatment emergent AE resulting in death",
+        nodes: [
+          {type:"Protocol", title:"Sections 11.1.2 and 11.3", detail:"Serious outcome and AE recording", ref:"Protocol Amendment 6 · pp. 35 and 37", quote:"Fatal events meet the serious adverse event criteria and all AEs are recorded in the CRF.", highlight:"Fatal", status:"verified", rationale:"The protocol defines fatal outcome and recording requirements."},
+          {type:"CRF", title:"Outcome", detail:"Persisted, resolved or death", ref:"aCRF · page 55", quote:"Persisted at end of study · Resolved with sequelae · Resolved without sequelae · Death", highlight:"Outcome", status:"verified", rationale:"The CRF captures the event outcome."},
+          {type:"Raw", title:"AE.AEOUT", detail:"Numeric · BEST format · variable order 25", ref:"metadata.xlsx · AE row 25", quote:"Dataset AE · Variable AEOUT · Type Numeric", highlight:"AEOUT", status:"verified", rationale:"The raw metadata contains the annotated outcome variable."},
+          {type:"SDTM", title:"AE.AEOUT", detail:"aCRF variable annotation", ref:"aCRF annotation · page 55", quote:"Domain AE · AEOUT", highlight:"AEOUT", status:"verified", rationale:"The annotated CRF maps Outcome to AEOUT."},
+          {type:"ADaM", title:"ADAE.AEOUT", detail:"Analysis outcome variable", ref:"metadata.xlsx · ADAE row 27", quote:"Dataset ADAE · Variable AEOUT · Type Numeric", highlight:"AEOUT", status:"candidate", rationale:"The analysis dataset contains AEOUT; derivation is not separately specified."},
+          {type:"SAP", title:"Section 5.10.3", detail:"Serious events and discontinuations", ref:"SAP 3.0 · page 17", quote:"Serious adverse events and adverse events resulting in premature discontinuation will be listed by patient.", highlight:"premature discontinuation", status:"verified", rationale:"The SAP identifies outcomes requiring separate analysis."},
+          {type:"Shell", title:"Table 14.3.1.1.1.1", detail:"Overall TEAE summary", ref:"SAP 3.0 · page 54", quote:"Patients with any treatment emergent AE resulting in death within 30 days of last dose", highlight:"resulting in death", status:"verified", rationale:"The planned output presents the fatal outcome count."}
+        ]
+      }
+    };
+
+    let selected = "AESER";
+    let selectedNode = 0;
+
+    function highlight(text, phrase) {
+      if (!phrase) return text;
+      const i = text.toLowerCase().indexOf(phrase.toLowerCase());
+      if (i < 0) return text;
+      return text.slice(0, i) + "<mark>" + text.slice(i, i + phrase.length) + "</mark>" + text.slice(i + phrase.length);
+    }
+
+    function renderVariables(filter = "") {
+      const list = document.getElementById("variable-list");
+      list.innerHTML = "";
+      Object.entries(traces).filter(([key, value]) => (key + " " + value.label).toLowerCase().includes(filter.toLowerCase())).forEach(([key, value]) => {
+        const btn = document.createElement("button");
+        btn.className = "variable" + (key === selected ? " active" : "");
+        btn.innerHTML = `<code>${key}</code><span>${value.label}</span>`;
+        btn.addEventListener("click", () => { selected = key; selectedNode = 0; renderVariables(document.getElementById("variable-search").value); renderTrace(); });
+        list.appendChild(btn);
+      });
+    }
+
+    function renderEvidence(node) {
+      const body = document.getElementById("evidence-body");
+      body.innerHTML = `
+        <div>
+          <div class="evidence-ref">${node.ref}</div>
+          <h3>${node.title}</h3>
+          <p>${node.detail}</p>
+          <div class="quote">${highlight(node.quote, node.highlight)}</div>
+          <div class="evidence-meta">
+            <div class="meta-row"><span>Layer</span><strong>${node.type}</strong></div>
+            <div class="meta-row"><span>Status</span><strong>${node.status === "verified" ? "Verified" : node.status === "gap" ? "Mapping gap" : "Candidate"}</strong></div>
+            <div class="meta-row"><span>Study</span><strong>SPI-611</strong></div>
+          </div>
+        </div>
+        <div class="rationale"><strong>Why this link exists</strong><p>${node.rationale}</p></div>`;
+    }
+
+    function renderTrace() {
+      const trace = traces[selected];
+      document.getElementById("trace-title").textContent = trace.label;
+      document.getElementById("trace-subtitle").textContent = trace.subtitle;
+      const badge = document.getElementById("trace-status");
+      badge.textContent = trace.status;
+      badge.className = "pill " + (trace.status.includes("gap") ? "amber" : "green");
+      document.getElementById("shell-active-row").firstElementChild.textContent = trace.row;
+
+      const grid = document.getElementById("trace-grid");
+      grid.innerHTML = "";
+      trace.nodes.forEach((node, index) => {
+        const btn = document.createElement("button");
+        btn.className = "trace-node" + (index === selectedNode ? " active" : "");
+        btn.innerHTML = `<span class="node-type">${node.type}</span><span class="node-copy"><strong>${node.title}</strong><span>${node.detail}</span></span><span class="status ${node.status}">${node.status === "verified" ? "Verified" : node.status === "gap" ? "Gap" : "Candidate"}</span>`;
+        btn.addEventListener("click", () => { selectedNode = index; renderTrace(); });
+        grid.appendChild(btn);
+      });
+      renderEvidence(trace.nodes[selectedNode]);
+    }
+
+    document.getElementById("variable-search").addEventListener("input", e => renderVariables(e.target.value));
+    document.querySelectorAll(".nav-btn").forEach(btn => btn.addEventListener("click", () => {
+      document.querySelectorAll(".nav-btn").forEach(x => x.classList.toggle("active", x === btn));
+      document.querySelectorAll(".view").forEach(view => view.hidden = view.id !== `view-${btn.dataset.view}`);
+    }));
+    document.querySelectorAll(".review-actions button").forEach(btn => btn.addEventListener("click", () => {
+      btn.textContent = "Saved";
+      btn.disabled = true;
+    }));
+
+    renderVariables();
+    renderTrace();
+  </script>
+</body>
+</html>
