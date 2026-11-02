@@ -97,6 +97,16 @@
     .metric span { display: block; color: var(--muted); font-size: 11px; }
     .metric strong { display: block; font-size: 21px; margin-top: 3px; }
 
+    .study-sources { margin-bottom: 18px; padding: 17px 18px 18px; }
+    .source-section-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; margin-bottom: 13px; }
+    .source-section-head h2 { margin: 0; font-size: 14px; }
+    .source-section-head p { margin: 4px 0 0; color: var(--muted); font-size: 11px; }
+    .source-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+    .source-card { border: 1px solid var(--line); border-radius: 13px; padding: 12px 13px; background: var(--soft); min-width: 0; }
+    .source-card strong { display: block; font-size: 12px; }
+    .source-card code { display: block; margin-top: 5px; color: var(--blue-2); font-size: 10px; overflow-wrap: anywhere; }
+    .source-card span { display: block; margin-top: 7px; color: var(--muted); font-size: 10px; line-height: 1.4; }
+
     .workspace { display: grid; grid-template-columns: 280px minmax(0, 1fr) 310px; gap: 16px; align-items: start; }
     .panel { background: white; border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
     .panel-head { padding: 17px 18px 12px; border-bottom: 1px solid var(--line); }
@@ -171,14 +181,12 @@
     .rationale strong { font-size: 11px; }
     .rationale p { margin-bottom: 0; }
 
-    .coverage-grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 16px; }
-    .artifact-table, .review-table { width: 100%; border-collapse: collapse; }
-    .artifact-table th, .artifact-table td, .review-table th, .review-table td {
+    .review-table { width: 100%; border-collapse: collapse; }
+    .review-table th, .review-table td {
       padding: 12px 14px; border-bottom: 1px solid var(--line); text-align: left; font-size: 12px; vertical-align: top;
     }
-    .artifact-table th, .review-table th { font-size: 10px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); background: var(--soft); }
-    .artifact-table tr:last-child td, .review-table tr:last-child td { border-bottom: 0; }
-    .note-list { padding: 18px 22px 20px; margin: 0; color: var(--muted); font-size: 12px; line-height: 1.65; }
+    .review-table th { font-size: 10px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); background: var(--soft); }
+    .review-table tr:last-child td { border-bottom: 0; }
     .review-actions { display: flex; gap: 6px; flex-wrap: wrap; }
     .small-btn { border: 1px solid var(--line); background: white; border-radius: 8px; padding: 6px 8px; font-size: 10px; color: var(--ink); }
     .small-btn:hover { border-color: #76a5c1; background: var(--blue-soft); }
@@ -192,7 +200,7 @@
     @media (max-width: 780px) {
       .app-shell { display: block; }
       .sidebar { padding: 15px; gap: 14px; }
-      .side-nav { grid-template-columns: repeat(3, 1fr); }
+      .side-nav { grid-template-columns: repeat(2, 1fr); }
       .study-card { display: none; }
       .topbar { height: auto; padding: 17px 18px; align-items: flex-start; }
       .page { padding: 16px; }
@@ -204,7 +212,7 @@
       .evidence-body { display: block; }
       .trace-node { grid-template-columns: 85px 1fr; }
       .trace-node .status { grid-column: 2; justify-self: start; }
-      .coverage-grid { grid-template-columns: 1fr; }
+      .source-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .shell-row { grid-template-columns: 1fr 82px 82px; }
     }
   </style>
@@ -218,7 +226,6 @@
       </div>
       <nav class="side-nav" aria-label="Primary navigation">
         <button class="nav-btn active" data-view="trace">Trace Explorer</button>
-        <button class="nav-btn" data-view="artifacts">Artifact Map</button>
         <button class="nav-btn" data-view="review">Review Queue</button>
       </nav>
       <div class="study-card">
@@ -249,6 +256,22 @@
             <div class="metric"><span>Unique variable names</span><strong id="unique-variable-count">354</strong></div>
             <div class="metric"><span>Datasets</span><strong>43</strong></div>
           </div>
+
+          <section class="panel study-sources" aria-labelledby="study-sources-title">
+            <div class="source-section-head">
+              <div>
+                <h2 id="study-sources-title">Study Sources</h2>
+                <p>Documents and metadata currently used to build the SPI-611 traceability view.</p>
+              </div>
+              <span class="pill green">4 study sources</span>
+            </div>
+            <div class="source-grid">
+              <div class="source-card"><strong>Protocol</strong><code>Protocol Amendment 6</code><span>Section and page anchors</span></div>
+              <div class="source-card"><strong>Annotated CRF</strong><code>acrf.pdf</code><span>Field and variable annotations</span></div>
+              <div class="source-card"><strong>Metadata</strong><code>metadata.xlsx</code><span>1,043 records across 43 datasets</span></div>
+              <div class="source-card"><strong>SAP and output shells</strong><code>SAP 3.0</code><span>Analysis rules and planned tables</span></div>
+            </div>
+          </section>
 
           <div class="workspace">
             <section class="panel variable-panel" aria-label="Variables">
@@ -284,35 +307,6 @@
               <div class="panel-head"><h2>Source evidence</h2><p>Exact document anchor for the selected node.</p></div>
               <div id="evidence-body" class="evidence-body"></div>
             </aside>
-          </div>
-        </section>
-
-        <section id="view-artifacts" class="view" hidden>
-          <div class="coverage-grid">
-            <div class="panel">
-              <div class="panel-head"><h2>Artifact coverage</h2><p>Files currently available for the prototype.</p></div>
-              <table class="artifact-table">
-                <thead><tr><th>Artifact</th><th>Source</th><th>Coverage</th></tr></thead>
-                <tbody>
-                  <tr><td>Protocol</td><td>SPI-611 Amendment 6</td><td><span class="status verified">Section anchors</span></td></tr>
-                  <tr><td>aCRF</td><td>SPI-611 annotated CRF</td><td><span class="status verified">Field and bbox anchors</span></td></tr>
-                  <tr><td>Metadata</td><td>metadata.xlsx</td><td><span class="status verified">1,043 records · 43 datasets</span></td></tr>
-                  <tr><td>SAP</td><td>SPI-611 SAP 3.0</td><td><span class="status verified">Rule and shell anchors</span></td></tr>
-                  <tr><td>Mock shell reference</td><td>SPI-515 mock tables</td><td><span class="status candidate">Cross-study reference</span></td></tr>
-                </tbody>
-              </table>
-            </div>
-            <div class="panel">
-              <div class="panel-head"><h2>Prototype rules</h2><p>What is treated as evidence in this version.</p></div>
-              <ul class="note-list">
-                <li>Protocol and SAP links resolve to a section and page.</li>
-                <li>CRF links resolve to an annotated field on a specific page.</li>
-                <li>All 1,043 dataset-variable records come from metadata.xlsx.</li>
-                <li>A metadata record verifies that a variable exists; it does not by itself verify protocol, CRF, SDTM, ADaM, SAP or shell mappings.</li>
-                <li>SDTM nodes use aCRF annotations when a separate mapping spec is unavailable.</li>
-                <li>SPI-611 mock outputs embedded in the SAP take precedence over the SPI-515 reference shell.</li>
-              </ul>
-            </div>
           </div>
         </section>
 
