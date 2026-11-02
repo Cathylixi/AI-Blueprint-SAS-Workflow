@@ -90,22 +90,19 @@
     .view[hidden] { display: none; }
     .eyebrow { text-transform: uppercase; letter-spacing: .11em; font-size: 10px; font-weight: 750; color: var(--blue-2); }
 
-    .metrics {
-      display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px;
+    .study-sources { margin-bottom: 18px; overflow: hidden; }
+    .study-sources h2 { margin: 0; padding: 16px 18px 12px; font-size: 14px; }
+    .study-source-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .study-source-table th, .study-source-table td {
+      padding: 11px 14px; border-top: 1px solid var(--line); text-align: left; vertical-align: middle;
+      font-size: 11px; line-height: 1.4; overflow-wrap: anywhere;
     }
-    .metric { background: white; border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
-    .metric span { display: block; color: var(--muted); font-size: 11px; }
-    .metric strong { display: block; font-size: 21px; margin-top: 3px; }
-
-    .study-sources { margin-bottom: 18px; padding: 17px 18px 18px; }
-    .source-section-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; margin-bottom: 13px; }
-    .source-section-head h2 { margin: 0; font-size: 14px; }
-    .source-section-head p { margin: 4px 0 0; color: var(--muted); font-size: 11px; }
-    .source-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
-    .source-card { border: 1px solid var(--line); border-radius: 13px; padding: 12px 13px; background: var(--soft); min-width: 0; }
-    .source-card strong { display: block; font-size: 12px; }
-    .source-card code { display: block; margin-top: 5px; color: var(--blue-2); font-size: 10px; overflow-wrap: anywhere; }
-    .source-card span { display: block; margin-top: 7px; color: var(--muted); font-size: 10px; line-height: 1.4; }
+    .study-source-table th {
+      background: var(--soft); color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: .07em;
+    }
+    .study-source-table td:first-child { font-weight: 700; }
+    .study-source-table code { color: var(--blue-2); font-size: 10px; }
+    .study-source-table .volume { font-weight: 700; color: var(--ink); }
 
     .workspace { display: grid; grid-template-columns: 280px minmax(0, 1fr) 310px; gap: 16px; align-items: start; }
     .panel { background: white; border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
@@ -204,7 +201,6 @@
       .study-card { display: none; }
       .topbar { height: auto; padding: 17px 18px; align-items: flex-start; }
       .page { padding: 16px; }
-      .metrics { grid-template-columns: repeat(2, minmax(0,1fr)); }
       .workspace { grid-template-columns: 1fr; }
       .variable-panel, .evidence-panel { position: static; }
       .variable-list { grid-template-columns: repeat(2, minmax(0,1fr)); }
@@ -212,8 +208,12 @@
       .evidence-body { display: block; }
       .trace-node { grid-template-columns: 85px 1fr; }
       .trace-node .status { grid-column: 2; justify-self: start; }
-      .source-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .shell-row { grid-template-columns: 1fr 82px 82px; }
+    }
+    @media (max-width: 540px) {
+      .study-sources h2 { padding: 14px 13px 10px; }
+      .study-source-table th, .study-source-table td { padding: 9px 8px; font-size: 10px; }
+      .study-source-table code { font-size: 9px; }
     }
   </style>
 </head>
@@ -249,28 +249,18 @@
 
       <div class="page">
         <section id="view-trace" class="view">
-          <div class="metrics" aria-label="Source summary">
-            <div class="metric"><span>Protocol</span><strong>56 pages</strong></div>
-            <div class="metric"><span>aCRF</span><strong>108 pages</strong></div>
-            <div class="metric"><span>Metadata records</span><strong id="metadata-record-count">1,043</strong></div>
-            <div class="metric"><span>Unique variable names</span><strong id="unique-variable-count">354</strong></div>
-            <div class="metric"><span>Datasets</span><strong>43</strong></div>
-          </div>
-
           <section class="panel study-sources" aria-labelledby="study-sources-title">
-            <div class="source-section-head">
-              <div>
-                <h2 id="study-sources-title">Study Sources</h2>
-                <p>Documents and metadata currently used to build the SPI-611 traceability view.</p>
-              </div>
-              <span class="pill green">4 study sources</span>
-            </div>
-            <div class="source-grid">
-              <div class="source-card"><strong>Protocol</strong><code>Protocol Amendment 6</code><span>Section and page anchors</span></div>
-              <div class="source-card"><strong>Annotated CRF</strong><code>acrf.pdf</code><span>Field and variable annotations</span></div>
-              <div class="source-card"><strong>Metadata</strong><code>metadata.xlsx</code><span>1,043 records across 43 datasets</span></div>
-              <div class="source-card"><strong>SAP and output shells</strong><code>SAP 3.0</code><span>Analysis rules and planned tables</span></div>
-            </div>
+            <h2 id="study-sources-title">Study Sources</h2>
+            <table class="study-source-table">
+              <colgroup><col style="width:24%"><col style="width:34%"><col style="width:42%"></colgroup>
+              <thead><tr><th>Source</th><th>File / Version</th><th>Volume</th></tr></thead>
+              <tbody>
+                <tr><td>Protocol</td><td><code>Protocol Amendment 6</code></td><td class="volume">56 pages</td></tr>
+                <tr><td>Annotated CRF</td><td><code>acrf.pdf</code></td><td class="volume">108 pages</td></tr>
+                <tr><td>Metadata</td><td><code>metadata.xlsx</code></td><td class="volume"><span id="metadata-record-count">1,043</span> records · <span id="unique-variable-count">354</span> unique variables · 43 datasets</td></tr>
+                <tr><td>SAP and output shells</td><td><code>SAP 3.0</code></td><td class="volume">—</td></tr>
+              </tbody>
+            </table>
           </section>
 
           <div class="workspace">
