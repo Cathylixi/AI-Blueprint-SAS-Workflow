@@ -58,20 +58,26 @@
     }
     .brand strong { display: block; font-size: 15px; }
     .brand span { display: block; color: #b9d3e2; font-size: 12px; margin-top: 3px; }
-    .side-nav { display: grid; gap: 7px; }
-    .nav-btn {
-      border: 0; border-radius: 11px; padding: 11px 12px;
-      text-align: left; color: #d6e7f0; background: transparent;
-      transition: .15s ease;
-    }
-    .nav-btn:hover, .nav-btn.active { background: rgba(255,255,255,.13); color: white; }
-    .study-card {
-      margin-top: auto; padding: 15px; border: 1px solid rgba(255,255,255,.18);
+    .study-selector {
+      padding: 16px; border: 1px solid rgba(255,255,255,.18);
       border-radius: 14px; background: rgba(255,255,255,.07);
     }
-    .study-card .eyebrow { color: #a8c8da; }
-    .study-card strong { display: block; margin: 5px 0 6px; }
-    .study-card p { color: #c4d9e5; font-size: 12px; line-height: 1.45; margin: 0; }
+    .study-selector label {
+      display: block; color: #d9ebf4; font-size: 12px; font-weight: 800;
+      letter-spacing: .06em; text-transform: uppercase;
+    }
+    .study-selector select {
+      width: 100%; margin-top: 10px; padding: 10px 11px;
+      border: 1px solid #b8d4e2; border-radius: 9px;
+      color: var(--ink); background: white; font-weight: 750;
+    }
+    .study-selector .availability { display: block; margin-top: 9px; color: #a8c8da; font-size: 11px; }
+    .study-selection-detail {
+      margin-top: auto; padding: 15px; border-left: 2px solid #78b4d2;
+      color: #c4d9e5;
+    }
+    .study-selection-detail strong { display: block; margin-bottom: 6px; color: white; }
+    .study-selection-detail p { margin: 0; font-size: 12px; line-height: 1.5; }
 
     .main { min-width: 0; }
     .topbar {
@@ -87,7 +93,6 @@
     .pill.amber { background: var(--amber-soft); color: var(--amber); }
 
     .page { padding: 24px 30px 40px; }
-    .view[hidden] { display: none; }
     .eyebrow { text-transform: uppercase; letter-spacing: .11em; font-size: 10px; font-weight: 750; color: var(--blue-2); }
 
     .study-sources { margin-bottom: 18px; overflow: hidden; }
@@ -187,8 +192,8 @@
     @media (max-width: 780px) {
       .app-shell { display: block; }
       .sidebar { padding: 15px; gap: 14px; }
-      .side-nav { grid-template-columns: repeat(2, 1fr); }
-      .study-card { display: none; }
+      .study-selector { max-width: 420px; }
+      .study-selection-detail { display: none; }
       .topbar { height: auto; padding: 17px 18px; align-items: flex-start; }
       .page { padding: 16px; }
       .workspace { grid-template-columns: 1fr; }
@@ -214,20 +219,23 @@
         <div class="brand-mark">CB</div>
         <div><strong>Clinical Blueprint</strong><span>Traceability prototype</span></div>
       </div>
-      <nav class="side-nav" aria-label="Primary navigation">
-        <button class="nav-btn active" data-view="trace">Trace Explorer</button>
-      </nav>
-      <div class="study-card">
-        <div class="eyebrow">Active study</div>
-        <strong>SPI-611</strong>
-        <p>Phase 3 bladder cancer study<br>Protocol Amendment 6</p>
+      <div class="study-selector">
+        <label for="study-select">Select Study</label>
+        <select id="study-select" aria-label="Select study">
+          <option value="SPI-611" selected>SPI-611</option>
+        </select>
+        <span class="availability">1 study available in Azure</span>
+      </div>
+      <div class="study-selection-detail" aria-live="polite">
+        <strong id="selected-study-id">SPI-611</strong>
+        <p id="selected-study-detail">Phase 3 bladder cancer study<br>Protocol Amendment 6<br>48 cloud files</p>
       </div>
     </aside>
 
     <main class="main">
       <header class="topbar">
         <div>
-          <h1>SPI-611 Study Blueprint</h1>
+          <h1 id="study-blueprint-title">SPI-611 Study Blueprint</h1>
           <p>Protocol, aCRF, metadata, SAP and planned outputs</p>
         </div>
         <div class="top-status">
@@ -237,7 +245,7 @@
       </header>
 
       <div class="page">
-        <section id="view-trace" class="view">
+        <section id="study-blueprint">
           <section class="panel study-sources" aria-labelledby="study-sources-title">
             <h2 id="study-sources-title">Study Sources</h2>
             <table class="study-source-table">
@@ -588,6 +596,11 @@
     document.getElementById("variable-search").addEventListener("input", renderVariables);
     document.getElementById("dataset-filter").addEventListener("change", renderVariables);
     document.getElementById("coverage-filter").addEventListener("change", renderVariables);
+    document.getElementById("study-select").addEventListener("change", event => {
+      const studyId = event.target.value;
+      document.getElementById("selected-study-id").textContent = studyId;
+      document.getElementById("study-blueprint-title").textContent = `${studyId} Study Blueprint`;
+    });
     loadMetadata();
   </script>
 </body>
