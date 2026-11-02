@@ -33,7 +33,7 @@
       color: var(--ink);
       background: #eef3f6;
     }
-    button, input { font: inherit; }
+    button, input, select { font: inherit; }
     button { cursor: pointer; }
 
     .app-shell {
@@ -91,35 +91,41 @@
     .eyebrow { text-transform: uppercase; letter-spacing: .11em; font-size: 10px; font-weight: 750; color: var(--blue-2); }
 
     .metrics {
-      display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px;
+      display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px;
     }
     .metric { background: white; border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
     .metric span { display: block; color: var(--muted); font-size: 11px; }
     .metric strong { display: block; font-size: 21px; margin-top: 3px; }
 
-    .workspace { display: grid; grid-template-columns: 235px minmax(0, 1fr) 310px; gap: 16px; align-items: start; }
+    .workspace { display: grid; grid-template-columns: 280px minmax(0, 1fr) 310px; gap: 16px; align-items: start; }
     .panel { background: white; border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
     .panel-head { padding: 17px 18px 12px; border-bottom: 1px solid var(--line); }
     .panel-head h2 { margin: 0; font-size: 14px; }
     .panel-head p { margin: 5px 0 0; font-size: 11px; color: var(--muted); line-height: 1.4; }
 
     .variable-panel { position: sticky; top: 18px; overflow: hidden; }
-    .search-wrap { padding: 12px 12px 5px; }
-    .search-wrap input {
+    .search-wrap { padding: 12px 12px 7px; }
+    .search-wrap input, .catalog-controls select {
       width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 9px 10px; color: var(--ink);
       background: var(--soft); outline: none;
     }
-    .search-wrap input:focus { border-color: #6da6c8; box-shadow: 0 0 0 3px #e4f0f7; }
-    .variable-list { padding: 6px 8px 12px; display: grid; gap: 5px; }
+    .search-wrap input:focus, .catalog-controls select:focus { border-color: #6da6c8; box-shadow: 0 0 0 3px #e4f0f7; }
+    .catalog-controls { padding: 0 12px 7px; display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+    .catalog-controls select { min-width: 0; padding: 8px 9px; font-size: 11px; }
+    .catalog-summary { padding: 0 14px 7px; color: var(--muted); font-size: 10px; }
+    .catalog-summary strong { color: var(--ink); }
+    .variable-list { padding: 6px 8px 12px; display: grid; gap: 5px; max-height: calc(100vh - 330px); min-height: 260px; overflow-y: auto; }
     .variable {
       width: 100%; border: 0; border-radius: 10px; padding: 10px 11px; background: transparent;
       text-align: left; color: var(--ink);
     }
     .variable:hover { background: var(--soft); }
     .variable.active { background: var(--blue-soft); color: var(--blue); }
-    .variable code { font-weight: 750; font-size: 12px; }
-    .variable span { display: block; margin-top: 3px; font-size: 10px; color: var(--muted); }
+    .variable code { font-weight: 750; font-size: 12px; overflow-wrap: anywhere; }
+    .variable span { display: block; margin-top: 3px; font-size: 10px; color: var(--muted); line-height: 1.35; }
+    .variable .variable-meta { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 5px; color: #7a8795; font-size: 9px; }
     .variable.active span { color: #527c97; }
+    .empty-state { padding: 18px 12px; text-align: center; color: var(--muted); font-size: 11px; line-height: 1.5; }
 
     .trace-panel { padding-bottom: 18px; overflow: hidden; }
     .trace-title { padding: 18px 20px 8px; display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
@@ -194,6 +200,7 @@
       .workspace { grid-template-columns: 1fr; }
       .variable-panel, .evidence-panel { position: static; }
       .variable-list { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .variable-list { max-height: 520px; }
       .evidence-body { display: block; }
       .trace-node { grid-template-columns: 85px 1fr; }
       .trace-node .status { grid-column: 2; justify-self: start; }
@@ -228,8 +235,8 @@
           <p>Protocol, aCRF, metadata, SAP and planned outputs</p>
         </div>
         <div class="top-status">
-          <span class="pill green">5 source artifacts loaded</span>
-          <span class="pill amber">3 links need review</span>
+          <span class="pill green">1,043 metadata records loaded</span>
+          <span class="pill amber">Unmapped links stay visible</span>
         </div>
       </header>
 
@@ -238,14 +245,24 @@
           <div class="metrics" aria-label="Source summary">
             <div class="metric"><span>Protocol</span><strong>56 pages</strong></div>
             <div class="metric"><span>aCRF</span><strong>108 pages</strong></div>
-            <div class="metric"><span>Metadata</span><strong>1,043 variables</strong></div>
+            <div class="metric"><span>Metadata records</span><strong id="metadata-record-count">1,043</strong></div>
+            <div class="metric"><span>Unique variable names</span><strong id="unique-variable-count">354</strong></div>
             <div class="metric"><span>Datasets</span><strong>43</strong></div>
           </div>
 
           <div class="workspace">
             <section class="panel variable-panel" aria-label="Variables">
-              <div class="panel-head"><h2>Variables</h2><p>Select an item to rebuild the evidence chain.</p></div>
-              <div class="search-wrap"><input id="variable-search" type="search" placeholder="Search variable" aria-label="Search variables"></div>
+              <div class="panel-head"><h2>Variable catalog</h2><p>All metadata records are available. Select one to inspect its evidence coverage.</p></div>
+              <div class="search-wrap"><input id="variable-search" type="search" placeholder="Dataset, variable, label, type…" aria-label="Search variable catalog"></div>
+              <div class="catalog-controls">
+                <select id="dataset-filter" aria-label="Filter by dataset"><option value="">All datasets</option></select>
+                <select id="coverage-filter" aria-label="Filter by evidence coverage">
+                  <option value="">All coverage</option>
+                  <option value="curated">Curated trace</option>
+                  <option value="metadata">Metadata only</option>
+                </select>
+              </div>
+              <div id="catalog-summary" class="catalog-summary">Loading metadata…</div>
               <div id="variable-list" class="variable-list"></div>
             </section>
 
@@ -255,7 +272,7 @@
                 <span id="trace-status" class="pill green">6 verified links</span>
               </div>
               <div id="trace-grid" class="trace-grid" aria-label="Trace chain"></div>
-              <div class="mini-shell" aria-label="Mock shell preview">
+              <div id="mock-shell-preview" class="mini-shell" aria-label="Mock shell preview">
                 <div id="shell-title" class="shell-head">Table 14.3.1.1.1.1 Overall Summary of Treatment Emergent Adverse Events</div>
                 <div class="shell-row head"><div>Planned row</div><div>EOquin n (%)</div><div>Placebo n (%)</div></div>
                 <div class="shell-row"><div>Patients with any treatment emergent AE</div><div>xx (xx.x)</div><div>xx (xx.x)</div></div>
@@ -279,7 +296,7 @@
                 <tbody>
                   <tr><td>Protocol</td><td>SPI-611 Amendment 6</td><td><span class="status verified">Section anchors</span></td></tr>
                   <tr><td>aCRF</td><td>SPI-611 annotated CRF</td><td><span class="status verified">Field and bbox anchors</span></td></tr>
-                  <tr><td>Metadata</td><td>metadata.xlsx</td><td><span class="status verified">43 datasets</span></td></tr>
+                  <tr><td>Metadata</td><td>metadata.xlsx</td><td><span class="status verified">1,043 records · 43 datasets</span></td></tr>
                   <tr><td>SAP</td><td>SPI-611 SAP 3.0</td><td><span class="status verified">Rule and shell anchors</span></td></tr>
                   <tr><td>Mock shell reference</td><td>SPI-515 mock tables</td><td><span class="status candidate">Cross-study reference</span></td></tr>
                 </tbody>
@@ -290,7 +307,8 @@
               <ul class="note-list">
                 <li>Protocol and SAP links resolve to a section and page.</li>
                 <li>CRF links resolve to an annotated field on a specific page.</li>
-                <li>Raw and analysis variables come from metadata.xlsx.</li>
+                <li>All 1,043 dataset-variable records come from metadata.xlsx.</li>
+                <li>A metadata record verifies that a variable exists; it does not by itself verify protocol, CRF, SDTM, ADaM, SAP or shell mappings.</li>
                 <li>SDTM nodes use aCRF annotations when a separate mapping spec is unavailable.</li>
                 <li>SPI-611 mock outputs embedded in the SAP take precedence over the SPI-515 reference shell.</li>
               </ul>
@@ -394,67 +412,222 @@
       }
     };
 
-    let selected = "AESER";
+    let metadataRecords = [];
+    let recordsById = new Map();
+    let sameNameIndex = new Map();
+    let selected = "AE.AESER";
     let selectedNode = 0;
 
-    function highlight(text, phrase) {
-      if (!phrase) return text;
-      const i = text.toLowerCase().indexOf(phrase.toLowerCase());
-      if (i < 0) return text;
-      return text.slice(0, i) + "<mark>" + text.slice(i, i + phrase.length) + "</mark>" + text.slice(i + phrase.length);
+    function escapeHTML(value) {
+      return String(value ?? "").replace(/[&<>'"]/g, character => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;"
+      })[character]);
     }
 
-    function renderVariables(filter = "") {
-      const list = document.getElementById("variable-list");
-      list.innerHTML = "";
-      Object.entries(traces).filter(([key, value]) => (key + " " + value.label).toLowerCase().includes(filter.toLowerCase())).forEach(([key, value]) => {
-        const btn = document.createElement("button");
-        btn.className = "variable" + (key === selected ? " active" : "");
-        btn.innerHTML = `<code>${key}</code><span>${value.label}</span>`;
-        btn.addEventListener("click", () => { selected = key; selectedNode = 0; renderVariables(document.getElementById("variable-search").value); renderTrace(); });
-        list.appendChild(btn);
+    function highlight(text, phrase) {
+      const source = String(text ?? "");
+      const target = String(phrase ?? "");
+      if (!target) return escapeHTML(source);
+      const i = source.toLowerCase().indexOf(target.toLowerCase());
+      if (i < 0) return escapeHTML(source);
+      return escapeHTML(source.slice(0, i)) + "<mark>" + escapeHTML(source.slice(i, i + target.length)) + "</mark>" + escapeHTML(source.slice(i + target.length));
+    }
+
+    function statusLabel(status) {
+      return status === "verified" ? "Verified" : status === "gap" ? "Gap" : "Candidate";
+    }
+
+    function isCurated(record) {
+      return (record.dataset === "AE" || record.dataset === "ADAE") && Boolean(traces[record.variable]);
+    }
+
+    function metadataNode(record) {
+      const format = record.format || "No format specified";
+      return {
+        type: "Metadata",
+        title: record.id,
+        detail: `${record.type} · ${format} · variable order ${record.order}`,
+        ref: `metadata.xlsx · ${record.dataset} · variable order ${record.order}`,
+        quote: `Dataset ${record.dataset} · Variable ${record.variable} · Label ${record.label} · Type ${record.type} · Format ${format}`,
+        highlight: record.variable,
+        status: "verified",
+        rationale: "This exact dataset-variable record is present in the uploaded metadata workbook."
+      };
+    }
+
+    function buildGenericTrace(record) {
+      const matchingIds = (sameNameIndex.get(record.variable) || []).filter(id => id !== record.id);
+      const analysisCandidate = record.dataset === "ADAE" || record.dataset === "XEFF";
+      const nodes = [
+        {type:"Protocol", title:"No protocol section mapped", detail:"Variable-level protocol linkage was not supplied", ref:"Protocol Amendment 6 · mapping not available", quote:"No verified protocol section has been linked to this metadata record.", highlight:"No verified", status:"gap", rationale:"A protocol section cannot be assigned from the metadata workbook alone."},
+        {type:"CRF", title:"No aCRF field mapped", detail:"Field-level annotation was not identified for this variable", ref:"aCRF · field mapping not available", quote:"No verified aCRF field has been linked to this metadata record.", highlight:"No verified", status:"gap", rationale:"A matching CRF field requires an explicit annotation or reviewed mapping."},
+        metadataNode(record)
+      ];
+
+      if (matchingIds.length) {
+        const preview = matchingIds.slice(0, 8).join(", ") + (matchingIds.length > 8 ? ` and ${matchingIds.length - 8} more` : "");
+        nodes.push({type:"Same name", title:`${matchingIds.length} cross-dataset match${matchingIds.length === 1 ? "" : "es"}`, detail:preview, ref:"metadata.xlsx · same variable name", quote:`The name ${record.variable} also appears in ${preview}.`, highlight:record.variable, status:"candidate", rationale:"A matching name is useful for review, but it does not prove that the variables share the same meaning or derivation."});
+      }
+
+      nodes.push(
+        {type:"SDTM", title:"No SDTM mapping specification supplied", detail:"Domain and standard-variable conformance are not verified", ref:"SDTM mapping specification · not supplied", quote:"Metadata presence alone does not establish an SDTM mapping.", highlight:"does not establish", status:"gap", rationale:"The annotated CRF supports a few curated examples, but no complete SDTM mapping specification was uploaded."},
+        analysisCandidate
+          ? {type:"ADaM", title:`${record.id} is an analysis candidate`, detail:"Dataset metadata is available; formal derivation and conformance are not", ref:`metadata.xlsx · ${record.dataset}`, quote:`${record.id} is present, but an ADaM derivation specification was not supplied.`, highlight:record.id, status:"candidate", rationale:"The dataset name and context suggest analysis use. This remains a candidate until a derivation specification is reviewed."}
+          : {type:"ADaM", title:"No ADaM derivation mapped", detail:"No analysis-variable relationship has been verified", ref:"ADaM specification · not supplied", quote:"No verified ADaM variable or derivation has been linked to this record.", highlight:"No verified", status:"gap", rationale:"A same-name variable in another dataset would still require a reviewed derivation rule."},
+        {type:"SAP", title:"No variable-level SAP rule mapped", detail:"The SAP has not been linked to this metadata record", ref:"SAP 3.0 · variable mapping not available", quote:"No verified SAP section has been linked to this metadata record.", highlight:"No verified", status:"gap", rationale:"SAP sections describe analysis rules, but each variable requires an explicit reviewed link."},
+        {type:"Shell", title:"No output shell mapped", detail:"No table, listing or figure row has been linked", ref:"SAP mock shells · output mapping not available", quote:"No verified output row has been linked to this metadata record.", highlight:"No verified", status:"gap", rationale:"An output link must identify the exact shell and row that consumes the variable."}
+      );
+
+      const gapCount = nodes.filter(node => node.status === "gap").length;
+      const candidateCount = nodes.filter(node => node.status === "candidate").length;
+      return {
+        label: `${record.id} — ${record.label}`,
+        subtitle: `${record.type} metadata record · variable order ${record.order}`,
+        status: `${gapCount} gaps${candidateCount ? ` · ${candidateCount} candidate${candidateCount === 1 ? "" : "s"}` : ""}`,
+        row: "No output shell mapped",
+        nodes,
+        curated: false
+      };
+    }
+
+    function buildTrace(record) {
+      if (!isCurated(record)) return buildGenericTrace(record);
+      const base = traces[record.variable];
+      return {
+        ...base,
+        label: `${record.id} — ${record.label}`,
+        subtitle: `${base.subtitle} · curated end-to-end example`,
+        curated: true
+      };
+    }
+
+    function filteredRecords() {
+      const query = document.getElementById("variable-search").value.trim().toLowerCase();
+      const dataset = document.getElementById("dataset-filter").value;
+      const coverage = document.getElementById("coverage-filter").value;
+      return metadataRecords.filter(record => {
+        if (dataset && record.dataset !== dataset) return false;
+        const curated = isCurated(record);
+        if (coverage === "curated" && !curated) return false;
+        if (coverage === "metadata" && curated) return false;
+        if (!query) return true;
+        const haystack = `${record.dataset} ${record.variable} ${record.id} ${record.label} ${record.type} ${record.format}`.toLowerCase();
+        return haystack.includes(query);
       });
+    }
+
+    function renderVariables() {
+      const list = document.getElementById("variable-list");
+      const records = filteredRecords();
+      document.getElementById("catalog-summary").innerHTML = `<strong>${records.length.toLocaleString()}</strong> of ${metadataRecords.length.toLocaleString()} records`;
+      list.innerHTML = "";
+      if (!records.length) {
+        list.innerHTML = '<div class="empty-state">No metadata records match these filters.</div>';
+        return;
+      }
+
+      const fragment = document.createDocumentFragment();
+      records.forEach(record => {
+        const btn = document.createElement("button");
+        btn.className = "variable" + (record.id === selected ? " active" : "");
+        btn.innerHTML = `<code>${escapeHTML(record.id)}</code><span>${escapeHTML(record.label)}</span><span class="variable-meta"><span>${escapeHTML(record.type)}</span><span>Order ${record.order}</span>${isCurated(record) ? '<span>Curated trace</span>' : ""}</span>`;
+        btn.addEventListener("click", () => {
+          selected = record.id;
+          selectedNode = 0;
+          renderVariables();
+          renderTrace();
+        });
+        fragment.appendChild(btn);
+      });
+      list.appendChild(fragment);
     }
 
     function renderEvidence(node) {
       const body = document.getElementById("evidence-body");
       body.innerHTML = `
         <div>
-          <div class="evidence-ref">${node.ref}</div>
-          <h3>${node.title}</h3>
-          <p>${node.detail}</p>
+          <div class="evidence-ref">${escapeHTML(node.ref)}</div>
+          <h3>${escapeHTML(node.title)}</h3>
+          <p>${escapeHTML(node.detail)}</p>
           <div class="quote">${highlight(node.quote, node.highlight)}</div>
           <div class="evidence-meta">
-            <div class="meta-row"><span>Layer</span><strong>${node.type}</strong></div>
-            <div class="meta-row"><span>Status</span><strong>${node.status === "verified" ? "Verified" : node.status === "gap" ? "Mapping gap" : "Candidate"}</strong></div>
+            <div class="meta-row"><span>Layer</span><strong>${escapeHTML(node.type)}</strong></div>
+            <div class="meta-row"><span>Status</span><strong>${escapeHTML(node.status === "verified" ? "Verified" : node.status === "gap" ? "Mapping gap" : "Candidate")}</strong></div>
             <div class="meta-row"><span>Study</span><strong>SPI-611</strong></div>
           </div>
         </div>
-        <div class="rationale"><strong>Why this link exists</strong><p>${node.rationale}</p></div>`;
+        <div class="rationale"><strong>Why this link exists</strong><p>${escapeHTML(node.rationale)}</p></div>`;
     }
 
     function renderTrace() {
-      const trace = traces[selected];
+      const record = recordsById.get(selected);
+      if (!record) return;
+      const trace = buildTrace(record);
+      selectedNode = Math.min(selectedNode, trace.nodes.length - 1);
       document.getElementById("trace-title").textContent = trace.label;
       document.getElementById("trace-subtitle").textContent = trace.subtitle;
       const badge = document.getElementById("trace-status");
       badge.textContent = trace.status;
-      badge.className = "pill " + (trace.status.includes("gap") ? "amber" : "green");
-      document.getElementById("shell-active-row").firstElementChild.textContent = trace.row;
+      badge.className = "pill " + (trace.curated && !trace.status.toLowerCase().includes("gap") ? "green" : "amber");
+
+      const shellPreview = document.getElementById("mock-shell-preview");
+      shellPreview.hidden = !trace.curated;
+      if (trace.curated) {
+        const shellNode = trace.nodes.find(node => node.type === "Shell");
+        document.getElementById("shell-title").textContent = shellNode ? `${shellNode.title} ${shellNode.detail}` : "Mapped output shell";
+        document.getElementById("shell-active-row").firstElementChild.textContent = trace.row;
+      }
 
       const grid = document.getElementById("trace-grid");
       grid.innerHTML = "";
       trace.nodes.forEach((node, index) => {
         const btn = document.createElement("button");
         btn.className = "trace-node" + (index === selectedNode ? " active" : "");
-        btn.innerHTML = `<span class="node-type">${node.type}</span><span class="node-copy"><strong>${node.title}</strong><span>${node.detail}</span></span><span class="status ${node.status}">${node.status === "verified" ? "Verified" : node.status === "gap" ? "Gap" : "Candidate"}</span>`;
+        btn.innerHTML = `<span class="node-type">${escapeHTML(node.type)}</span><span class="node-copy"><strong>${escapeHTML(node.title)}</strong><span>${escapeHTML(node.detail)}</span></span><span class="status ${node.status}">${statusLabel(node.status)}</span>`;
         btn.addEventListener("click", () => { selectedNode = index; renderTrace(); });
         grid.appendChild(btn);
       });
       renderEvidence(trace.nodes[selectedNode]);
     }
 
-    document.getElementById("variable-search").addEventListener("input", e => renderVariables(e.target.value));
+    async function loadMetadata() {
+      const list = document.getElementById("variable-list");
+      try {
+        const response = await fetch("metadata.json", {cache: "no-cache"});
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const payload = await response.json();
+        if (!Array.isArray(payload.records) || payload.records.length !== 1043) throw new Error("Unexpected metadata record count");
+        metadataRecords = payload.records;
+        recordsById = new Map(metadataRecords.map(record => [record.id, record]));
+        sameNameIndex = new Map();
+        metadataRecords.forEach(record => {
+          const ids = sameNameIndex.get(record.variable) || [];
+          ids.push(record.id);
+          sameNameIndex.set(record.variable, ids);
+        });
+
+        document.getElementById("metadata-record-count").textContent = payload.recordCount.toLocaleString();
+        document.getElementById("unique-variable-count").textContent = payload.uniqueVariableCount.toLocaleString();
+        const datasetFilter = document.getElementById("dataset-filter");
+        [...new Set(metadataRecords.map(record => record.dataset))].sort().forEach(dataset => {
+          const option = document.createElement("option");
+          option.value = dataset;
+          option.textContent = dataset;
+          datasetFilter.appendChild(option);
+        });
+
+        if (!recordsById.has(selected)) selected = metadataRecords[0].id;
+        renderVariables();
+        renderTrace();
+      } catch (error) {
+        document.getElementById("catalog-summary").textContent = "Metadata could not be loaded.";
+        list.innerHTML = `<div class="empty-state">The metadata catalog failed to load: ${escapeHTML(error.message)}</div>`;
+      }
+    }
+
+    document.getElementById("variable-search").addEventListener("input", renderVariables);
+    document.getElementById("dataset-filter").addEventListener("change", renderVariables);
+    document.getElementById("coverage-filter").addEventListener("change", renderVariables);
     document.querySelectorAll(".nav-btn").forEach(btn => btn.addEventListener("click", () => {
       document.querySelectorAll(".nav-btn").forEach(x => x.classList.toggle("active", x === btn));
       document.querySelectorAll(".view").forEach(view => view.hidden = view.id !== `view-${btn.dataset.view}`);
@@ -464,8 +637,7 @@
       btn.disabled = true;
     }));
 
-    renderVariables();
-    renderTrace();
+    loadMetadata();
   </script>
 </body>
 </html>
