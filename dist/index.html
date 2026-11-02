@@ -27,6 +27,7 @@
     }
 
     * { box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; }
     body {
       margin: 0;
       font-family: Inter, Aptos, "Segoe UI", Arial, sans-serif;
@@ -37,7 +38,8 @@
     button { cursor: pointer; }
 
     .app-shell {
-      min-height: 100vh;
+      height: 100dvh;
+      min-height: 0;
       display: grid;
       grid-template-columns: 248px minmax(0, 1fr);
     }
@@ -48,6 +50,8 @@
       display: flex;
       flex-direction: column;
       gap: 28px;
+      min-height: 0;
+      overflow: hidden;
     }
     .brand { display: flex; gap: 12px; align-items: center; }
     .brand-mark {
@@ -72,16 +76,12 @@
       color: var(--ink); background: white; font-weight: 750;
     }
     .study-selector .availability { display: block; margin-top: 9px; color: #a8c8da; font-size: 11px; }
-    .study-selection-detail {
-      margin-top: auto; padding: 15px; border-left: 2px solid #78b4d2;
-      color: #c4d9e5;
+    .main {
+      min-width: 0; min-height: 0; height: 100dvh; overflow: hidden;
+      display: grid; grid-template-rows: 64px minmax(0, 1fr);
     }
-    .study-selection-detail strong { display: block; margin-bottom: 6px; color: white; }
-    .study-selection-detail p { margin: 0; font-size: 12px; line-height: 1.5; }
-
-    .main { min-width: 0; }
     .topbar {
-      height: 76px; padding: 0 30px; background: white; border-bottom: 1px solid var(--line);
+      height: 64px; padding: 0 24px; background: white; border-bottom: 1px solid var(--line);
       display: flex; align-items: center; justify-content: space-between; gap: 18px;
     }
     .topbar h1 { font-size: 20px; margin: 0; font-weight: 650; }
@@ -90,15 +90,20 @@
     .pill.blue { background: var(--blue-soft); color: var(--blue); }
     .pill.amber { background: var(--amber-soft); color: var(--amber); }
 
-    .page { padding: 24px 30px 40px; }
+    .page { padding: 14px 20px 16px; min-height: 0; overflow: hidden; }
     .eyebrow { text-transform: uppercase; letter-spacing: .11em; font-size: 10px; font-weight: 750; color: var(--blue-2); }
 
-    .study-sources { margin-bottom: 18px; overflow: hidden; }
-    .study-sources h2 { margin: 0; padding: 16px 18px 12px; font-size: 14px; }
+    #study-blueprint {
+      height: 100%; min-height: 0; display: grid;
+      grid-template-rows: auto minmax(0, 1fr); gap: 12px;
+    }
+
+    .study-sources { overflow: hidden; }
+    .study-sources h2 { margin: 0; padding: 11px 14px 9px; font-size: 13px; }
     .study-source-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
     .study-source-table th, .study-source-table td {
-      padding: 11px 14px; border-top: 1px solid var(--line); text-align: left; vertical-align: middle;
-      font-size: 11px; line-height: 1.4; overflow-wrap: anywhere;
+      padding: 7px 12px; border-top: 1px solid var(--line); text-align: left; vertical-align: middle;
+      font-size: 10px; line-height: 1.3; overflow-wrap: anywhere;
     }
     .study-source-table th {
       background: var(--soft); color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: .07em;
@@ -107,24 +112,28 @@
     .study-source-table code { color: var(--blue-2); font-size: 10px; }
     .study-source-table .volume { font-weight: 700; color: var(--ink); }
 
-    .workspace { display: grid; grid-template-columns: 280px minmax(0, 1fr) 310px; gap: 16px; align-items: start; }
+    .workspace {
+      min-height: 0; height: 100%; overflow: hidden;
+      display: grid; grid-template-columns: 270px minmax(0, 1fr) 300px;
+      gap: 12px; align-items: stretch;
+    }
     .panel { background: white; border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
-    .panel-head { padding: 17px 18px 12px; border-bottom: 1px solid var(--line); }
+    .panel-head { padding: 13px 14px 10px; border-bottom: 1px solid var(--line); }
     .panel-head h2 { margin: 0; font-size: 14px; }
     .panel-head p { margin: 5px 0 0; font-size: 11px; color: var(--muted); line-height: 1.4; }
 
-    .variable-panel { position: sticky; top: 18px; overflow: hidden; }
-    .search-wrap { padding: 12px 12px 7px; }
+    .variable-panel { min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+    .search-wrap { padding: 9px 10px 6px; }
     .search-wrap input, .catalog-controls select {
       width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 9px 10px; color: var(--ink);
       background: var(--soft); outline: none;
     }
     .search-wrap input:focus, .catalog-controls select:focus { border-color: #6da6c8; box-shadow: 0 0 0 3px #e4f0f7; }
-    .catalog-controls { padding: 0 12px 7px; display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+    .catalog-controls { padding: 0 10px 6px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
     .catalog-controls select { min-width: 0; padding: 8px 9px; font-size: 11px; }
-    .catalog-summary { padding: 0 14px 7px; color: var(--muted); font-size: 10px; }
+    .catalog-summary { padding: 0 12px 6px; color: var(--muted); font-size: 10px; }
     .catalog-summary strong { color: var(--ink); }
-    .variable-list { padding: 6px 8px 12px; display: grid; gap: 5px; max-height: calc(100vh - 330px); min-height: 260px; overflow-y: auto; }
+    .variable-list { padding: 5px 7px 9px; display: grid; gap: 4px; flex: 1; min-height: 0; overflow-y: auto; }
     .variable {
       width: 100%; border: 0; border-radius: 10px; padding: 10px 11px; background: transparent;
       text-align: left; color: var(--ink);
@@ -137,38 +146,41 @@
     .variable.active span { color: #527c97; }
     .empty-state { padding: 18px 12px; text-align: center; color: var(--muted); font-size: 11px; line-height: 1.5; }
 
-    .trace-panel { padding-bottom: 18px; overflow: hidden; }
-    .trace-title { padding: 18px 20px 8px; display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
-    .trace-title h2 { margin: 2px 0 0; font-size: 19px; }
-    .trace-title p { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
-    .trace-grid { padding: 8px 20px 10px; display: grid; gap: 8px; }
+    .trace-panel { min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+    .trace-title { padding: 13px 14px 7px; display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+    .trace-title h2 { margin: 2px 0 0; font-size: 17px; }
+    .trace-title p { margin: 4px 0 0; color: var(--muted); font-size: 11px; }
+    .trace-grid { padding: 6px 14px 10px; display: grid; gap: 6px; flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; }
     .trace-node {
-      border: 1px solid var(--line); background: white; border-radius: 13px; padding: 12px 14px;
-      display: grid; grid-template-columns: 110px 1fr auto; gap: 12px; align-items: center; text-align: left;
+      border: 1px solid var(--line); background: white; border-radius: 12px; padding: 9px 10px;
+      width: 100%; min-width: 0; display: grid; grid-template-columns: 70px minmax(0, 1fr) auto; gap: 8px; align-items: center; text-align: left;
       color: var(--ink); transition: .16s ease; position: relative;
     }
     .trace-node:not(:last-child)::after {
-      content: ""; position: absolute; left: 56px; bottom: -9px; width: 2px; height: 9px; background: #a8bbc8;
+      content: ""; position: absolute; left: 42px; bottom: -7px; width: 2px; height: 7px; background: #a8bbc8;
     }
     .trace-node:hover, .trace-node.active { border-color: #72a8c8; background: #f7fbfd; transform: translateY(-1px); }
     .node-type { font-size: 10px; font-weight: 750; color: var(--blue-2); text-transform: uppercase; letter-spacing: .08em; }
-    .node-copy strong { font-size: 13px; display: block; }
-    .node-copy span { font-size: 11px; color: var(--muted); display: block; margin-top: 3px; line-height: 1.35; }
+    .node-copy { min-width: 0; }
+    .node-copy strong { font-size: 12px; display: block; overflow-wrap: anywhere; }
+    .node-copy span { font-size: 10px; color: var(--muted); display: block; margin-top: 2px; line-height: 1.3; }
     .status { font-size: 10px; font-weight: 700; border-radius: 999px; padding: 5px 7px; white-space: nowrap; }
     .status.verified { background: var(--green-soft); color: var(--green); }
     .status.candidate { background: var(--amber-soft); color: var(--amber); }
     .status.gap { background: var(--red-soft); color: var(--red); }
 
-    .mini-shell { margin: 10px 20px 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
-    .mini-shell .shell-head { padding: 10px 12px; background: #173f5f; color: white; font-size: 11px; font-weight: 700; }
-    .shell-row { display: grid; grid-template-columns: 1fr 110px 110px; border-top: 1px solid var(--line); }
-    .shell-row > div { padding: 8px 10px; font-size: 10px; border-left: 1px solid var(--line); }
+    .evidence-stack { min-height: 0; overflow: hidden; display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 12px; }
+    .output-shell-panel { overflow: hidden; }
+    .output-shell-panel .panel-head p { overflow-wrap: anywhere; }
+    .mini-shell { border-top: 1px solid var(--line); overflow: hidden; }
+    .shell-row { display: grid; grid-template-columns: minmax(90px, 1fr) 72px 72px; border-top: 1px solid var(--line); }
+    .shell-row > div { padding: 7px 8px; font-size: 9px; border-left: 1px solid var(--line); }
     .shell-row > div:first-child { border-left: 0; }
     .shell-row.head { background: var(--soft); font-weight: 700; color: var(--muted); }
     .shell-row.highlight { background: #fff8e9; font-weight: 700; color: #805317; }
 
-    .evidence-panel { position: sticky; top: 18px; overflow: hidden; }
-    .evidence-body { padding: 16px 18px 20px; }
+    .evidence-panel { min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+    .evidence-body { padding: 13px 14px 15px; min-height: 0; overflow-y: auto; }
     .evidence-ref { color: var(--blue-2); font-size: 11px; font-weight: 750; }
     .evidence-body h3 { font-size: 16px; margin: 7px 0 7px; }
     .evidence-body p { font-size: 12px; color: var(--muted); line-height: 1.55; }
@@ -182,26 +194,18 @@
     .rationale p { margin-bottom: 0; }
 
     @media (max-width: 1100px) {
-      .workspace { grid-template-columns: 210px minmax(0, 1fr); }
-      .evidence-panel { position: static; grid-column: 1 / -1; }
-      .evidence-body { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-      .rationale { margin-top: 0; padding-top: 0; border-top: 0; }
+      .app-shell { grid-template-columns: 210px minmax(0, 1fr); }
+      .sidebar { padding: 18px 14px; }
+      .page { padding: 12px; }
+      .workspace { grid-template-columns: 200px minmax(250px, 1fr) 250px; gap: 10px; }
     }
     @media (max-width: 780px) {
-      .app-shell { display: block; }
-      .sidebar { padding: 15px; gap: 14px; }
-      .study-selector { max-width: 420px; }
-      .study-selection-detail { display: none; }
-      .topbar { height: auto; padding: 17px 18px; align-items: flex-start; }
-      .page { padding: 16px; }
-      .workspace { grid-template-columns: 1fr; }
-      .variable-panel, .evidence-panel { position: static; }
-      .variable-list { grid-template-columns: repeat(2, minmax(0,1fr)); }
-      .variable-list { max-height: 520px; }
-      .evidence-body { display: block; }
-      .trace-node { grid-template-columns: 85px 1fr; }
-      .trace-node .status { grid-column: 2; justify-self: start; }
-      .shell-row { grid-template-columns: 1fr 82px 82px; }
+      .app-shell { grid-template-columns: 180px minmax(700px, 1fr); }
+      .brand span, .study-selector .availability { display: none; }
+      .sidebar { padding: 14px 10px; gap: 16px; }
+      .study-selector { padding: 12px; }
+      .topbar { padding: 0 16px; }
+      .workspace { grid-template-columns: 190px minmax(250px, 1fr) 240px; }
     }
     @media (max-width: 540px) {
       .study-sources h2 { padding: 14px 13px 10px; }
@@ -223,10 +227,6 @@
           <option value="SPI-611" selected>SPI-611</option>
         </select>
         <span class="availability">1 study available in Azure</span>
-      </div>
-      <div class="study-selection-detail" aria-live="polite">
-        <strong id="selected-study-id">SPI-611</strong>
-        <p id="selected-study-detail">Phase 3 bladder cancer study<br>Protocol Amendment 6<br>48 cloud files</p>
       </div>
     </aside>
 
@@ -275,18 +275,22 @@
                 <span id="trace-status" class="pill green">6 verified links</span>
               </div>
               <div id="trace-grid" class="trace-grid" aria-label="Trace chain"></div>
-              <div id="mock-shell-preview" class="mini-shell" aria-label="Mock shell preview">
-                <div id="shell-title" class="shell-head">Table 14.3.1.1.1.1 Overall Summary of Treatment Emergent Adverse Events</div>
-                <div class="shell-row head"><div>Planned row</div><div>EOquin n (%)</div><div>Placebo n (%)</div></div>
-                <div class="shell-row"><div>Patients with any treatment emergent AE</div><div>xx (xx.x)</div><div>xx (xx.x)</div></div>
-                <div id="shell-active-row" class="shell-row highlight"><div>Patients with any serious AE</div><div>xx (xx.x)</div><div>xx (xx.x)</div></div>
-              </div>
             </section>
 
-            <aside class="panel evidence-panel" aria-live="polite">
-              <div class="panel-head"><h2>Source evidence</h2><p>Exact document anchor for the selected node.</p></div>
-              <div id="evidence-body" class="evidence-body"></div>
-            </aside>
+            <div class="evidence-stack">
+              <aside class="panel evidence-panel" aria-live="polite">
+                <div class="panel-head"><h2>Source evidence</h2><p>Exact document anchor for the selected node.</p></div>
+                <div id="evidence-body" class="evidence-body"></div>
+              </aside>
+              <section id="mock-shell-preview" class="panel output-shell-panel" aria-label="Output shell preview">
+                <div class="panel-head"><h2>Output shell</h2><p id="shell-title">Table 14.3.1.1.1.1 Overall Summary of Treatment Emergent Adverse Events</p></div>
+                <div class="mini-shell">
+                  <div class="shell-row head"><div>Planned row</div><div>EOquin n (%)</div><div>Placebo n (%)</div></div>
+                  <div class="shell-row"><div>Patients with any treatment emergent AE</div><div>xx (xx.x)</div><div>xx (xx.x)</div></div>
+                  <div id="shell-active-row" class="shell-row highlight"><div>Patients with any serious AE</div><div>xx (xx.x)</div><div>xx (xx.x)</div></div>
+                </div>
+              </section>
+            </div>
           </div>
         </section>
 
@@ -591,7 +595,6 @@
     document.getElementById("coverage-filter").addEventListener("change", renderVariables);
     document.getElementById("study-select").addEventListener("change", event => {
       const studyId = event.target.value;
-      document.getElementById("selected-study-id").textContent = studyId;
       document.getElementById("study-blueprint-title").textContent = `${studyId} Study Blueprint`;
     });
     loadMetadata();
