@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="SPI-611 clinical traceability prototype">
+  <meta name="description" content="Clinical study traceability prototype">
   <title>Clinical Blueprint</title>
   <style>
     :root {
@@ -211,6 +211,118 @@
       .study-source-table th, .study-source-table td { padding: 9px 8px; font-size: 10px; }
       .study-source-table code { font-size: 9px; }
     }
+
+    /* Two-page study workspace */
+    .sidebar { gap: 22px; }
+    .side-nav { display: grid; gap: 7px; }
+    .side-nav button {
+      width: 100%; border: 1px solid transparent; border-radius: 11px; padding: 11px 12px;
+      display: flex; align-items: center; gap: 10px; text-align: left; color: #cfe3ee;
+      background: transparent; font-weight: 700; font-size: 13px;
+    }
+    .side-nav button:hover { background: rgba(255,255,255,.07); }
+    .side-nav button.active { color: white; background: rgba(255,255,255,.13); border-color: rgba(255,255,255,.16); }
+    .nav-icon {
+      width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center;
+      background: rgba(255,255,255,.1); font-size: 11px; letter-spacing: .02em;
+    }
+    .side-nav button.active .nav-icon { background: #dff0f7; color: var(--blue); }
+    .sidebar-note { margin-top: auto; color: #91b6c9; font-size: 10px; line-height: 1.5; }
+
+    .topbar-study { display: flex; align-items: center; gap: 11px; }
+    .topbar-study label { color: var(--muted); font-size: 11px; font-weight: 750; text-transform: uppercase; letter-spacing: .08em; }
+    .topbar-study select {
+      min-width: 170px; border: 1px solid var(--line); border-radius: 10px; padding: 9px 34px 9px 11px;
+      background: var(--soft); color: var(--ink); font-weight: 750;
+    }
+    .topbar-availability { color: var(--muted); font-size: 11px; }
+    .page-view { height: 100%; min-height: 0; }
+    .page-view[hidden] { display: none !important; }
+
+    .overview-page { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 12px; }
+    .page-heading { display: flex; align-items: end; justify-content: space-between; gap: 20px; }
+    .page-heading h1 { margin: 0; font-size: 23px; }
+    .page-heading p { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
+    .overview-grid { min-height: 0; display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(300px, .75fr); gap: 12px; }
+    .overview-panel { padding: 17px; min-height: 0; overflow: hidden; }
+    .overview-panel h2 { margin: 0 0 12px; font-size: 15px; }
+    .overview-facts { display: grid; gap: 9px; }
+    .overview-fact {
+      display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center;
+      padding: 11px 12px; border: 1px solid var(--line); border-radius: 11px; background: var(--soft);
+    }
+    .overview-fact span { color: var(--muted); font-size: 11px; }
+    .overview-fact strong { font-size: 13px; }
+    .overview-note { margin-top: 12px; color: var(--muted); font-size: 11px; line-height: 1.55; }
+
+    .blueprint-page { display: grid; grid-template-rows: auto auto minmax(0, 1fr); gap: 10px; }
+    .blueprint-page .page-heading p,
+    .blueprint-page .selected-card > span:not(.card-status),
+    .blueprint-page .artifact-lane-head span,
+    .blueprint-page .artifact-lane-head p,
+    .blueprint-page .artifact-item span { display: none; }
+    .blueprint-toolbar { display: flex; align-items: center; gap: 10px; }
+    .blueprint-toolbar input {
+      width: min(340px, 34vw); border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px;
+      background: white; color: var(--ink); outline: none;
+    }
+    .blueprint-toolbar input:focus { border-color: #6da6c8; box-shadow: 0 0 0 3px #e4f0f7; }
+
+    .selected-blueprint { min-height: 0; overflow: hidden; }
+    .selected-scroll { min-height: 0; overflow-x: auto; overflow-y: hidden; }
+    .selected-canvas { min-width: 820px; position: relative; padding: 14px 12px 12px; }
+    .selected-lanes { display: grid; grid-template-columns: repeat(7, minmax(104px, 1fr)); gap: 8px; align-items: stretch; position: relative; z-index: 2; }
+    #connector-layer { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; overflow: visible; }
+    .connector { fill: none; stroke: #5f93b4; stroke-width: 2; opacity: .85; }
+    .connector-dot { fill: #5f93b4; }
+    .selected-lane { min-width: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 6px; }
+    .lane-label { color: var(--blue-2); font-size: 9px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
+    .selected-card {
+      min-width: 0; width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 10px;
+      background: white; color: var(--ink); text-align: left; position: relative; box-shadow: 0 6px 14px rgba(24,56,80,.05);
+    }
+    .selected-card:hover, .selected-card.active { border-color: #6fa5c5; background: #f7fbfd; }
+    .selected-card.gap { border-style: dashed; background: #fffafa; }
+    .selected-card strong { display: block; font-size: 11px; line-height: 1.25; overflow-wrap: anywhere; }
+    .selected-card span { display: block; margin-top: 4px; color: var(--muted); font-size: 9px; line-height: 1.35; overflow-wrap: anywhere; }
+    .selected-card .card-status { margin-top: 7px; font-weight: 750; color: var(--green); }
+    .selected-card.gap .card-status { color: var(--red); }
+    .catalog-board { min-height: 0; overflow-x: auto; overflow-y: hidden; }
+    .catalog-canvas { min-width: 820px; height: 100%; position: relative; }
+    .catalog-grid { height: 100%; display: grid; grid-template-columns: repeat(7, minmax(104px, 1fr)); gap: 8px; position: relative; z-index: 1; }
+    #catalog-connector-layer { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 3; pointer-events: none; overflow: visible; }
+    .catalog-connector { fill: none; stroke: #4d8fb7; stroke-width: 2; opacity: .9; }
+    .catalog-connector-dot { fill: #4d8fb7; }
+    .artifact-lane { min-width: 0; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+    .artifact-lane-head { padding: 10px 10px 8px; border-bottom: 1px solid var(--line); }
+    .artifact-lane-head div { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .artifact-lane-head h3 { margin: 0; font-size: 12px; }
+    .artifact-lane-head span { color: var(--muted); font-size: 9px; }
+    .artifact-lane-head p { margin: 4px 0 0; color: var(--muted); font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .artifact-list { min-height: 0; flex: 1; overflow-y: auto; padding: 5px; display: grid; align-content: start; gap: 3px; }
+    .artifact-item {
+      width: 100%; border: 1px solid transparent; border-radius: 8px; padding: 8px; background: transparent;
+      color: var(--ink); text-align: left; min-width: 0;
+    }
+    .artifact-item:hover { background: var(--soft); }
+    .artifact-item.active { background: var(--blue-soft); border-color: #b9d6e6; color: var(--blue); }
+    .artifact-item.related { background: #f6fbfd; }
+    .artifact-item.trace-linked { background: var(--blue-soft); border-color: #8ebbd3; color: var(--blue); box-shadow: inset 3px 0 0 #4d8fb7; }
+    .artifact-item strong { display: block; font-size: 10px; line-height: 1.25; overflow-wrap: anywhere; }
+    .artifact-item span { display: block; margin-top: 3px; color: var(--muted); font-size: 9px; line-height: 1.3; overflow-wrap: anywhere; }
+    .artifact-item.active span { color: #527c97; }
+    .lane-empty { padding: 14px 8px; color: var(--muted); text-align: center; font-size: 9px; line-height: 1.45; }
+
+    @media (max-width: 1100px) {
+      .blueprint-page { grid-template-rows: auto auto minmax(0, 1fr); }
+      .overview-grid { grid-template-columns: 1fr 300px; }
+    }
+    @media (max-width: 780px) {
+      .app-shell { grid-template-columns: 178px minmax(720px, 1fr); }
+      .sidebar { padding: 16px 11px; }
+      .topbar-study select { min-width: 140px; }
+      .overview-grid { grid-template-columns: minmax(0, 1fr) 280px; }
+    }
   </style>
 </head>
 <body>
@@ -220,24 +332,25 @@
         <div class="brand-mark">CB</div>
         <div><strong>Clinical Blueprint</strong><span>Traceability prototype</span></div>
       </div>
-      <div class="study-selector">
-        <label for="study-select">Select Study</label>
-        <select id="study-select" aria-label="Select study">
-          <option value="SPI-611" selected>SPI-611</option>
-        </select>
-        <span class="availability">1 study available</span>
-      </div>
+      <nav class="side-nav" aria-label="Study workspace pages">
+        <button type="button" class="active" data-page="overview" aria-current="page"><span class="nav-icon">OV</span><span>Overview</span></button>
+        <button type="button" data-page="blueprint"><span class="nav-icon">BP</span><span>Blueprint</span></button>
+      </nav>
     </aside>
 
     <main class="main">
       <header class="topbar">
-        <div>
-          <h1 id="study-blueprint-title">SPI-611 Study Blueprint</h1>
+        <div class="topbar-study">
+          <label for="study-select">Select Study</label>
+          <select id="study-select" aria-label="Select study">
+            <option value="SPI-611" selected>SPI-611</option>
+          </select>
+          <span class="topbar-availability">1 study available</span>
         </div>
       </header>
 
       <div class="page">
-        <section id="study-blueprint">
+        <section id="page-overview" class="page-view overview-page" data-view="overview">
           <section class="panel study-sources" aria-labelledby="study-sources-title">
             <h2 id="study-sources-title">Study Sources</h2>
             <table class="study-source-table">
@@ -247,11 +360,10 @@
                 <tr><td>Protocol</td><td><code>Protocol Amendment 6</code></td><td class="volume">56 pages</td></tr>
                 <tr><td>Annotated CRF</td><td><code>acrf.pdf</code></td><td class="volume">108 pages</td></tr>
                 <tr><td>Metadata</td><td><code>metadata.xlsx</code></td><td class="volume"><span id="metadata-record-count">1,043</span> records · <span id="unique-variable-count">354</span> unique variables · 43 datasets</td></tr>
-                <tr><td>SAP and output shells</td><td><code>SAP 3.0</code></td><td class="volume">—</td></tr>
+                <tr><td>SAP and TFL</td><td><code>SAP 3.0</code></td><td class="volume">—</td></tr>
               </tbody>
             </table>
           </section>
-
           <div class="workspace">
             <section class="panel variable-panel" aria-label="Variables">
               <div class="panel-head"><h2>Variable catalog</h2><p>All metadata records are available. Select one to inspect its evidence coverage.</p></div>
@@ -276,8 +388,8 @@
                 <div class="panel-head"><h2>Source evidence</h2><p>Exact document anchor for the selected node.</p></div>
                 <div id="evidence-body" class="evidence-body"></div>
               </aside>
-              <section id="mock-shell-preview" class="panel output-shell-panel" aria-label="Output shell preview">
-                <div class="panel-head"><h2>Output shell</h2><p id="shell-title">Table 14.3.1.1.1.1 Overall Summary of Treatment Emergent Adverse Events</p></div>
+              <section id="mock-shell-preview" class="panel output-shell-panel" aria-label="TFL preview">
+                <div class="panel-head"><h2>TFL</h2><p id="shell-title">Table 14.3.1.1.1.1 Overall Summary of Treatment Emergent Adverse Events</p></div>
                 <div class="mini-shell">
                   <div class="shell-row head"><div>Planned row</div><div>EOquin n (%)</div><div>Placebo n (%)</div></div>
                   <div class="shell-row"><div>Patients with any treatment emergent AE</div><div>xx (xx.x)</div><div>xx (xx.x)</div></div>
@@ -288,6 +400,28 @@
           </div>
         </section>
 
+        <section id="page-blueprint" class="page-view blueprint-page" data-view="blueprint" hidden>
+          <div class="page-heading">
+            <h1>Blueprint</h1>
+            <div class="blueprint-toolbar"><input id="artifact-search" type="search" placeholder="Search all artifacts…" aria-label="Search blueprint artifacts"></div>
+          </div>
+
+          <section class="panel selected-blueprint" aria-label="Trace path">
+            <div class="selected-scroll">
+              <div id="selected-canvas" class="selected-canvas">
+                <svg id="connector-layer" aria-hidden="true"></svg>
+                <div id="selected-lanes" class="selected-lanes"></div>
+              </div>
+            </div>
+          </section>
+
+          <div class="catalog-board" aria-label="Blueprint artifact catalog">
+            <div id="catalog-canvas" class="catalog-canvas">
+              <svg id="catalog-connector-layer" aria-hidden="true"></svg>
+              <div id="catalog-grid" class="catalog-grid"></div>
+            </div>
+          </div>
+        </section>
       </div>
     </main>
   </div>
@@ -371,10 +505,22 @@
       }
     };
 
+    const layers = [
+      {key:"Protocol", label:"Protocol", description:"Sections"},
+      {key:"CRF", label:"CRF", description:"Fields"},
+      {key:"Raw", label:"Raw", description:"Variables"},
+      {key:"SDTM", label:"SDTM", description:"Variables"},
+      {key:"ADaM", label:"ADaM", description:"Variables"},
+      {key:"SAP", label:"SAP", description:"Sections / rules"},
+      {key:"Output", label:"TFL", description:"Tables / listings / figures"}
+    ];
+    const analysisDatasets = new Set(["ADAE", "XEFF"]);
     let metadataRecords = [];
     let recordsById = new Map();
-    let selected = "AE.AESER";
-    let selectedNode = 0;
+    let catalogs = new Map();
+    let selectedRecordId = "AE.AESER";
+    let selectedStage = "Protocol";
+    let overviewSelectedNode = 0;
 
     function escapeHTML(value) {
       return String(value ?? "").replace(/[&<>'"]/g, character => ({
@@ -386,20 +532,73 @@
       const source = String(text ?? "");
       const target = String(phrase ?? "");
       if (!target) return escapeHTML(source);
-      const i = source.toLowerCase().indexOf(target.toLowerCase());
-      if (i < 0) return escapeHTML(source);
-      return escapeHTML(source.slice(0, i)) + "<mark>" + escapeHTML(source.slice(i, i + target.length)) + "</mark>" + escapeHTML(source.slice(i + target.length));
+      const index = source.toLowerCase().indexOf(target.toLowerCase());
+      if (index < 0) return escapeHTML(source);
+      return escapeHTML(source.slice(0, index)) + "<mark>" + escapeHTML(source.slice(index, index + target.length)) + "</mark>" + escapeHTML(source.slice(index + target.length));
     }
 
     function statusLabel(status) {
       return status === "verified" ? "Verified" : "Gap";
     }
 
-    function isCurated(record) {
-      return record.dataset === "AE" && Boolean(traces[record.variable]);
+    function canonicalType(type) {
+      return type === "Shell" ? "Output" : type;
     }
 
-    function metadataNode(record) {
+    function displayType(type) {
+      return type === "Shell" || type === "Output" ? "TFL" : type;
+    }
+
+    function isCurated(record) {
+      return record && record.dataset === "AE" && Boolean(traces[record.variable]);
+    }
+
+    function metadataNode(record, stage) {
+      const format = record.format || "No format specified";
+      return {
+        type: stage,
+        title: record.id,
+        detail: `${record.type} · ${format} · variable order ${record.order}`,
+        ref: `metadata.xlsx · ${record.dataset} · variable order ${record.order}`,
+        quote: `Dataset ${record.dataset} · Variable ${record.variable} · Label ${record.label} · Type ${record.type} · Format ${format}`,
+        status: "verified",
+        rationale: "This exact dataset-variable record is present in the metadata workbook. Its presence does not establish a cross-dataset derivation."
+      };
+    }
+
+    function gapNode(layer) {
+      const copy = {
+        Protocol:["No protocol section mapped", "Variable-level protocol linkage was not supplied", "Protocol Amendment 6 · mapping not available"],
+        CRF:["No CRF field mapped", "Field-level annotation was not identified", "aCRF · field mapping not available"],
+        Raw:["No raw variable mapped", "No source-variable relationship has been verified", "Raw mapping specification · not supplied"],
+        SDTM:["No SDTM mapping supplied", "Standard-variable conformance is not verified", "SDTM mapping specification · not supplied"],
+        ADaM:["No ADaM derivation mapped", "No analysis-variable relationship has been verified", "ADaM specification · not supplied"],
+        SAP:["No SAP rule mapped", "No variable-level analysis rule has been linked", "SAP 3.0 · variable mapping not available"],
+        Output:["No TFL mapped", "No table, listing or figure row has been linked", "SAP TFL shells · mapping not available"]
+      }[layer];
+      return {type:layer, title:copy[0], detail:copy[1], ref:copy[2], quote:"No verified relationship is available for this layer.", status:"gap", rationale:"A connector is shown only when a reviewed source explicitly supports the relationship."};
+    }
+
+    function buildGenericTrace(record) {
+      const selectedLayer = analysisDatasets.has(record.dataset) ? "ADaM" : "Raw";
+      const nodes = layers.map(layer => layer.key === selectedLayer ? metadataNode(record, selectedLayer) : gapNode(layer.key));
+      return {
+        label: `${record.id} — ${record.label}`,
+        subtitle: `${record.type} metadata record · variable order ${record.order}`,
+        status: "6 mapping gaps",
+        nodes,
+        curated: false,
+        traceKey: null
+      };
+    }
+
+    function buildTrace(record) {
+      if (!isCurated(record)) return buildGenericTrace(record);
+      const base = traces[record.variable];
+      return {...base, label:`${record.id} — ${record.label}`, curated:true, traceKey:record.variable};
+    }
+
+    function overviewMetadataNode(record) {
       const format = record.format || "No format specified";
       return {
         type: "Metadata",
@@ -413,33 +612,28 @@
       };
     }
 
-    function buildGenericTrace(record) {
+    function buildOverviewGenericTrace(record) {
       const nodes = [
         {type:"Protocol", title:"No protocol section mapped", detail:"Variable-level protocol linkage was not supplied", ref:"Protocol Amendment 6 · mapping not available", quote:"No verified protocol section has been linked to this metadata record.", highlight:"No verified", status:"gap", rationale:"A protocol section cannot be assigned from the metadata workbook alone."},
         {type:"CRF", title:"No aCRF field mapped", detail:"Field-level annotation was not identified for this variable", ref:"aCRF · field mapping not available", quote:"No verified aCRF field has been linked to this metadata record.", highlight:"No verified", status:"gap", rationale:"A matching CRF field requires an explicit annotation or reviewed mapping."},
-        metadataNode(record)
-      ];
-
-      nodes.push(
+        overviewMetadataNode(record),
         {type:"SDTM", title:"No SDTM mapping specification supplied", detail:"Domain and standard-variable conformance are not verified", ref:"SDTM mapping specification · not supplied", quote:"Metadata presence alone does not establish an SDTM mapping.", highlight:"does not establish", status:"gap", rationale:"The annotated CRF supports a few curated examples, but no complete SDTM mapping specification was uploaded."},
         {type:"ADaM", title:"No ADaM derivation mapped", detail:"No analysis-variable relationship has been verified", ref:"ADaM specification · not supplied", quote:"No verified ADaM variable or derivation has been linked to this record.", highlight:"No verified", status:"gap", rationale:"Dataset and variable names alone do not establish equivalence or a derivation relationship."},
         {type:"SAP", title:"No variable-level SAP rule mapped", detail:"The SAP has not been linked to this metadata record", ref:"SAP 3.0 · variable mapping not available", quote:"No verified SAP section has been linked to this metadata record.", highlight:"No verified", status:"gap", rationale:"SAP sections describe analysis rules, but each variable requires an explicit reviewed link."},
-        {type:"Shell", title:"No output shell mapped", detail:"No table, listing or figure row has been linked", ref:"SAP mock shells · output mapping not available", quote:"No verified output row has been linked to this metadata record.", highlight:"No verified", status:"gap", rationale:"An output link must identify the exact shell and row that consumes the variable."}
-      );
-
-      const gapCount = nodes.filter(node => node.status === "gap").length;
+        {type:"Shell", title:"No TFL mapped", detail:"No table, listing or figure row has been linked", ref:"SAP TFL shells · mapping not available", quote:"No verified TFL row has been linked to this metadata record.", highlight:"No verified", status:"gap", rationale:"A TFL link must identify the exact table, listing or figure row that consumes the variable."}
+      ];
       return {
         label: `${record.id} — ${record.label}`,
         subtitle: `${record.type} metadata record · variable order ${record.order}`,
-        status: `${gapCount} mapping gaps`,
-        row: "No output shell mapped",
+        status: `${nodes.filter(node => node.status === "gap").length} mapping gaps`,
+        row: "No TFL mapped",
         nodes,
         curated: false
       };
     }
 
-    function buildTrace(record) {
-      if (!isCurated(record)) return buildGenericTrace(record);
+    function buildOverviewTrace(record) {
+      if (!isCurated(record)) return buildOverviewGenericTrace(record);
       const base = traces[record.variable];
       return {
         ...base,
@@ -449,53 +643,52 @@
       };
     }
 
-    function filteredRecords() {
+    function filteredOverviewRecords() {
       const query = document.getElementById("variable-search").value.trim().toLowerCase();
       const dataset = document.getElementById("dataset-filter").value;
       return metadataRecords.filter(record => {
         if (dataset && record.dataset !== dataset) return false;
         if (!query) return true;
-        const haystack = `${record.dataset} ${record.variable} ${record.id} ${record.label} ${record.type} ${record.format}`.toLowerCase();
-        return haystack.includes(query);
+        return `${record.dataset} ${record.variable} ${record.id} ${record.label} ${record.type} ${record.format}`.toLowerCase().includes(query);
       });
     }
 
-    function renderVariables() {
+    function renderOverviewVariables() {
       const list = document.getElementById("variable-list");
-      const records = filteredRecords();
+      const records = filteredOverviewRecords();
       document.getElementById("catalog-summary").innerHTML = `<strong>${records.length.toLocaleString()}</strong> of ${metadataRecords.length.toLocaleString()} records`;
       list.innerHTML = "";
       if (!records.length) {
         list.innerHTML = '<div class="empty-state">No metadata records match these filters.</div>';
         return;
       }
-
       const fragment = document.createDocumentFragment();
       records.forEach(record => {
-        const btn = document.createElement("button");
-        btn.className = "variable" + (record.id === selected ? " active" : "");
-        btn.innerHTML = `<code>${escapeHTML(record.id)}</code><span>${escapeHTML(record.label)}</span><span class="variable-meta"><span>${escapeHTML(record.type)}</span><span>Order ${record.order}</span>${isCurated(record) ? '<span>Curated trace</span>' : ""}</span>`;
-        btn.addEventListener("click", () => {
-          selected = record.id;
-          selectedNode = 0;
-          renderVariables();
-          renderTrace();
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `variable${record.id === selectedRecordId ? " active" : ""}`;
+        button.innerHTML = `<code>${escapeHTML(record.id)}</code><span>${escapeHTML(record.label)}</span><span class="variable-meta"><span>${escapeHTML(record.type)}</span><span>Order ${record.order}</span>${isCurated(record) ? '<span>Curated trace</span>' : ""}</span>`;
+        button.addEventListener("click", () => {
+          selectedRecordId = record.id;
+          selectedStage = analysisDatasets.has(record.dataset) ? "ADaM" : "Raw";
+          overviewSelectedNode = 0;
+          renderOverview();
+          renderBlueprint();
         });
-        fragment.appendChild(btn);
+        fragment.appendChild(button);
       });
       list.appendChild(fragment);
     }
 
-    function renderEvidence(node) {
-      const body = document.getElementById("evidence-body");
-      body.innerHTML = `
+    function renderOverviewEvidence(node) {
+      document.getElementById("evidence-body").innerHTML = `
         <div>
           <div class="evidence-ref">${escapeHTML(node.ref)}</div>
           <h3>${escapeHTML(node.title)}</h3>
           <p>${escapeHTML(node.detail)}</p>
           <div class="quote">${highlight(node.quote, node.highlight)}</div>
           <div class="evidence-meta">
-            <div class="meta-row"><span>Layer</span><strong>${escapeHTML(node.type)}</strong></div>
+            <div class="meta-row"><span>Layer</span><strong>${escapeHTML(displayType(node.type))}</strong></div>
             <div class="meta-row"><span>Status</span><strong>${escapeHTML(node.status === "verified" ? "Verified" : "Mapping gap")}</strong></div>
             <div class="meta-row"><span>Study</span><strong>SPI-611</strong></div>
           </div>
@@ -503,44 +696,269 @@
         <div class="rationale"><strong>Why this link exists</strong><p>${escapeHTML(node.rationale)}</p></div>`;
     }
 
-    function renderTrace() {
-      const record = recordsById.get(selected);
+    function renderOverviewTrace() {
+      const record = recordsById.get(selectedRecordId);
       if (!record) return;
-      const trace = buildTrace(record);
-      selectedNode = Math.min(selectedNode, trace.nodes.length - 1);
+      const trace = buildOverviewTrace(record);
+      overviewSelectedNode = Math.min(overviewSelectedNode, trace.nodes.length - 1);
       document.getElementById("trace-title").textContent = trace.label;
       document.getElementById("trace-subtitle").textContent = trace.subtitle;
       const badge = document.getElementById("trace-status");
       badge.textContent = trace.status;
-      badge.className = "pill " + (trace.curated && !trace.status.toLowerCase().includes("gap") ? "green" : "amber");
+      badge.className = `pill ${trace.curated && !trace.status.toLowerCase().includes("gap") ? "green" : "amber"}`;
 
       const shellPreview = document.getElementById("mock-shell-preview");
       shellPreview.hidden = !trace.curated;
       if (trace.curated) {
-        const shellNode = trace.nodes.find(node => node.type === "Shell");
-        document.getElementById("shell-title").textContent = shellNode ? `${shellNode.title} ${shellNode.detail}` : "Mapped output shell";
+        const shellNode = trace.nodes.find(node => canonicalType(node.type) === "Output");
+        document.getElementById("shell-title").textContent = shellNode ? `${shellNode.title} ${shellNode.detail}` : "Mapped TFL";
         document.getElementById("shell-active-row").firstElementChild.textContent = trace.row;
       }
 
       const grid = document.getElementById("trace-grid");
       grid.innerHTML = "";
       trace.nodes.forEach((node, index) => {
-        const btn = document.createElement("button");
-        btn.className = "trace-node" + (index === selectedNode ? " active" : "");
-        btn.innerHTML = `<span class="node-type">${escapeHTML(node.type)}</span><span class="node-copy"><strong>${escapeHTML(node.title)}</strong><span>${escapeHTML(node.detail)}</span></span><span class="status ${node.status}">${statusLabel(node.status)}</span>`;
-        btn.addEventListener("click", () => { selectedNode = index; renderTrace(); });
-        grid.appendChild(btn);
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `trace-node${index === overviewSelectedNode ? " active" : ""}`;
+        button.innerHTML = `<span class="node-type">${escapeHTML(displayType(node.type))}</span><span class="node-copy"><strong>${escapeHTML(node.title)}</strong><span>${escapeHTML(node.detail)}</span></span><span class="status ${node.status}">${statusLabel(node.status)}</span>`;
+        button.addEventListener("click", () => {
+          overviewSelectedNode = index;
+          renderOverviewTrace();
+        });
+        grid.appendChild(button);
       });
-      renderEvidence(trace.nodes[selectedNode]);
+      renderOverviewEvidence(trace.nodes[overviewSelectedNode]);
+    }
+
+    function renderOverview() {
+      renderOverviewVariables();
+      renderOverviewTrace();
+    }
+
+    function buildCatalogs() {
+      const next = new Map(layers.map(layer => [layer.key, []]));
+      Object.entries(traces).forEach(([traceKey, trace]) => {
+        trace.nodes.forEach((node, nodeIndex) => {
+          const stage = canonicalType(node.type);
+          if (stage === "Raw" || stage === "ADaM" || !next.has(stage)) return;
+          next.get(stage).push({
+            id:`${traceKey}:${stage}:${nodeIndex}`,
+            title:node.title,
+            detail:node.detail,
+            traceKey,
+            stage,
+            node
+          });
+        });
+      });
+
+      metadataRecords.forEach(record => {
+        const stage = analysisDatasets.has(record.dataset) ? "ADaM" : "Raw";
+        next.get(stage).push({
+          id:record.id,
+          title:record.id,
+          detail:`${record.label} · ${record.type}`,
+          traceKey:isCurated(record) ? record.variable : null,
+          recordId:record.id,
+          stage
+        });
+      });
+      catalogs = next;
+    }
+
+    function currentTrace() {
+      const record = recordsById.get(selectedRecordId);
+      return record ? buildTrace(record) : null;
+    }
+
+    function nodeForStage(trace, stage) {
+      return trace.nodes.find(node => canonicalType(node.type) === stage) || gapNode(stage);
+    }
+
+    function renderEvidenceStrip(node) {
+      const strip = document.getElementById("evidence-strip");
+      if (!strip) return;
+      strip.innerHTML = `<strong>${escapeHTML(node.ref)}</strong><span>${escapeHTML(node.rationale)}</span>`;
+    }
+
+    function renderSelectedBlueprint() {
+      const trace = currentTrace();
+      if (!trace) return;
+      const lanes = document.getElementById("selected-lanes");
+      lanes.innerHTML = "";
+      layers.forEach(layer => {
+        const node = nodeForStage(trace, layer.key);
+        const lane = document.createElement("div");
+        lane.className = "selected-lane";
+        lane.innerHTML = `<div class="lane-label">${escapeHTML(layer.label)}</div>`;
+        const card = document.createElement("button");
+        card.type = "button";
+        card.className = `selected-card ${node.status === "gap" ? "gap" : ""}${selectedStage === layer.key ? " active" : ""}`;
+        card.dataset.stage = layer.key;
+        card.dataset.status = node.status;
+        card.innerHTML = `<strong>${escapeHTML(node.title)}</strong><span class="card-status">${node.status === "verified" ? "Verified" : "Mapping gap"}</span>`;
+        card.addEventListener("click", () => {
+          selectedStage = layer.key;
+          renderSelectedBlueprint();
+        });
+        lane.appendChild(card);
+        lanes.appendChild(lane);
+      });
+      requestAnimationFrame(drawConnectors);
+    }
+
+    function drawConnectors() {
+      const canvas = document.getElementById("selected-canvas");
+      const svg = document.getElementById("connector-layer");
+      if (!canvas || !svg || document.getElementById("page-blueprint").hidden) return;
+      const canvasRect = canvas.getBoundingClientRect();
+      const cards = [...canvas.querySelectorAll(".selected-card")];
+      svg.setAttribute("viewBox", `0 0 ${canvas.clientWidth} ${canvas.clientHeight}`);
+      svg.innerHTML = "";
+      for (let i = 0; i < cards.length - 1; i += 1) {
+        const left = cards[i];
+        const right = cards[i + 1];
+        if (left.dataset.status !== "verified" || right.dataset.status !== "verified") continue;
+        const a = left.getBoundingClientRect();
+        const b = right.getBoundingClientRect();
+        const x1 = a.right - canvasRect.left;
+        const y1 = a.top + a.height / 2 - canvasRect.top;
+        const x2 = b.left - canvasRect.left;
+        const y2 = b.top + b.height / 2 - canvasRect.top;
+        const bend = Math.max(18, (x2 - x1) * .45);
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("class", "connector");
+        path.setAttribute("d", `M ${x1} ${y1} C ${x1 + bend} ${y1}, ${x2 - bend} ${y2}, ${x2} ${y2}`);
+        svg.appendChild(path);
+        [ [x1,y1], [x2,y2] ].forEach(([cx,cy]) => {
+          const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          dot.setAttribute("class", "connector-dot"); dot.setAttribute("cx", cx); dot.setAttribute("cy", cy); dot.setAttribute("r", 3);
+          svg.appendChild(dot);
+        });
+      }
+    }
+
+    function selectArtifact(item) {
+      if (item.recordId) {
+        selectedRecordId = item.recordId;
+      } else if (item.traceKey && recordsById.has(`AE.${item.traceKey}`)) {
+        selectedRecordId = `AE.${item.traceKey}`;
+      }
+      selectedStage = item.stage;
+      renderBlueprint();
+      overviewSelectedNode = Math.max(0, layers.findIndex(layer => layer.key === item.stage));
+      renderOverview();
+    }
+
+    function renderCatalogs() {
+      const grid = document.getElementById("catalog-grid");
+      const query = document.getElementById("artifact-search").value.trim().toLowerCase();
+      const trace = currentTrace();
+      grid.innerHTML = "";
+      layers.forEach(layer => {
+        const allItems = catalogs.get(layer.key) || [];
+        const items = query ? allItems.filter(item => `${item.title} ${item.detail} ${item.traceKey || ""}`.toLowerCase().includes(query)) : allItems;
+        const stageNode = trace ? nodeForStage(trace, layer.key) : null;
+        const linkedItem = layer.key === "Raw" || layer.key === "ADaM"
+          ? items.find(item => item.recordId === selectedRecordId && item.stage === layer.key)
+          : items.find(item => trace && item.traceKey === trace.traceKey && item.node === stageNode);
+        const lane = document.createElement("section");
+        lane.className = "panel artifact-lane";
+        lane.innerHTML = `<div class="artifact-lane-head"><h3>${escapeHTML(layer.label)}</h3></div>`;
+        const list = document.createElement("div");
+        list.className = "artifact-list";
+        if (!items.length) {
+          list.innerHTML = '<div class="lane-empty">No matching artifacts</div>';
+        } else {
+          const fragment = document.createDocumentFragment();
+          items.forEach(item => {
+            const active = item.recordId ? item.recordId === selectedRecordId && item.stage === selectedStage : trace && item.traceKey === trace.traceKey && item.stage === selectedStage;
+            const related = !active && trace && item.traceKey && item.traceKey === trace.traceKey;
+            const traceLinked = item === linkedItem && stageNode && stageNode.status === "verified";
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = `artifact-item${active ? " active" : related ? " related" : ""}${traceLinked ? " trace-linked" : ""}`;
+            if (traceLinked) {
+              button.dataset.traceLinked = "true";
+              button.dataset.stageIndex = String(layers.findIndex(candidate => candidate.key === layer.key));
+            }
+            button.innerHTML = `<strong>${escapeHTML(item.title)}</strong>`;
+            button.addEventListener("click", () => selectArtifact(item));
+            fragment.appendChild(button);
+          });
+          list.appendChild(fragment);
+        }
+        lane.appendChild(list);
+        grid.appendChild(lane);
+        list.addEventListener("scroll", () => requestAnimationFrame(drawCatalogConnectors), {passive:true});
+      });
+      requestAnimationFrame(() => {
+        grid.querySelectorAll(".artifact-item.trace-linked").forEach(item => item.scrollIntoView({block:"nearest", inline:"nearest"}));
+        requestAnimationFrame(drawCatalogConnectors);
+      });
+    }
+
+    function drawCatalogConnectors() {
+      const canvas = document.getElementById("catalog-canvas");
+      const svg = document.getElementById("catalog-connector-layer");
+      if (!canvas || !svg || document.getElementById("page-blueprint").hidden) return;
+      const canvasRect = canvas.getBoundingClientRect();
+      const linkedItems = [...canvas.querySelectorAll(".artifact-item.trace-linked")]
+        .sort((a, b) => Number(a.dataset.stageIndex) - Number(b.dataset.stageIndex));
+      svg.setAttribute("viewBox", `0 0 ${canvas.clientWidth} ${canvas.clientHeight}`);
+      svg.innerHTML = "";
+      for (let i = 0; i < linkedItems.length - 1; i += 1) {
+        const left = linkedItems[i];
+        const right = linkedItems[i + 1];
+        if (Number(right.dataset.stageIndex) - Number(left.dataset.stageIndex) !== 1) continue;
+        const a = left.getBoundingClientRect();
+        const b = right.getBoundingClientRect();
+        const x1 = a.right - canvasRect.left;
+        const y1 = a.top + a.height / 2 - canvasRect.top;
+        const x2 = b.left - canvasRect.left;
+        const y2 = b.top + b.height / 2 - canvasRect.top;
+        const bend = Math.max(18, (x2 - x1) * .45);
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("class", "catalog-connector");
+        path.setAttribute("d", `M ${x1} ${y1} C ${x1 + bend} ${y1}, ${x2 - bend} ${y2}, ${x2} ${y2}`);
+        svg.appendChild(path);
+        [[x1, y1], [x2, y2]].forEach(([cx, cy]) => {
+          const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          dot.setAttribute("class", "catalog-connector-dot");
+          dot.setAttribute("cx", cx);
+          dot.setAttribute("cy", cy);
+          dot.setAttribute("r", 3);
+          svg.appendChild(dot);
+        });
+      }
+    }
+
+    function renderBlueprint() {
+      renderSelectedBlueprint();
+      renderCatalogs();
+    }
+
+    function showPage(pageName) {
+      const name = pageName === "blueprint" ? "blueprint" : "overview";
+      document.querySelectorAll("[data-view]").forEach(view => { view.hidden = view.dataset.view !== name; });
+      document.querySelectorAll(".side-nav button").forEach(button => {
+        const active = button.dataset.page === name;
+        button.classList.toggle("active", active);
+        if (active) button.setAttribute("aria-current", "page"); else button.removeAttribute("aria-current");
+      });
+      if (name === "blueprint") requestAnimationFrame(() => {
+        drawConnectors();
+        drawCatalogConnectors();
+      });
     }
 
     async function loadMetadata() {
-      const list = document.getElementById("variable-list");
       try {
-        const response = await fetch("metadata.json", {cache: "no-cache"});
+        const response = await fetch("metadata.json", {cache:"no-cache"});
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const payload = await response.json();
-        if (!Array.isArray(payload.records) || payload.records.length !== 1043) throw new Error("Unexpected metadata record count");
+        if (!Array.isArray(payload.records)) throw new Error("Metadata records are missing");
         metadataRecords = payload.records;
         recordsById = new Map(metadataRecords.map(record => [record.id, record]));
         document.getElementById("metadata-record-count").textContent = payload.recordCount.toLocaleString();
@@ -552,22 +970,30 @@
           option.textContent = dataset;
           datasetFilter.appendChild(option);
         });
-
-        if (!recordsById.has(selected)) selected = metadataRecords[0].id;
-        renderVariables();
-        renderTrace();
+        if (!recordsById.has(selectedRecordId)) selectedRecordId = metadataRecords[0].id;
+        buildCatalogs();
+        renderOverview();
+        renderBlueprint();
       } catch (error) {
         document.getElementById("catalog-summary").textContent = "Metadata could not be loaded.";
-        list.innerHTML = `<div class="empty-state">The metadata catalog failed to load: ${escapeHTML(error.message)}</div>`;
+        document.getElementById("variable-list").innerHTML = `<div class="empty-state">The metadata catalog failed to load: ${escapeHTML(error.message)}</div>`;
+        document.getElementById("catalog-grid").innerHTML = `<section class="panel overview-panel"><h2>Metadata could not be loaded</h2><p class="overview-note">${escapeHTML(error.message)}</p></section>`;
       }
     }
 
-    document.getElementById("variable-search").addEventListener("input", renderVariables);
-    document.getElementById("dataset-filter").addEventListener("change", renderVariables);
-    document.getElementById("study-select").addEventListener("change", event => {
-      const studyId = event.target.value;
-      document.getElementById("study-blueprint-title").textContent = `${studyId} Study Blueprint`;
-    });
+    document.querySelectorAll(".side-nav button").forEach(button => button.addEventListener("click", () => {
+      const page = button.dataset.page;
+      history.replaceState(null, "", `${location.pathname}${location.search}#${page}`);
+      showPage(page);
+    }));
+    document.getElementById("variable-search").addEventListener("input", renderOverviewVariables);
+    document.getElementById("dataset-filter").addEventListener("change", renderOverviewVariables);
+    document.getElementById("artifact-search").addEventListener("input", renderCatalogs);
+    window.addEventListener("resize", () => requestAnimationFrame(() => {
+      drawConnectors();
+      drawCatalogConnectors();
+    }));
+    showPage(location.hash.slice(1));
     loadMetadata();
   </script>
 </body>
