@@ -129,7 +129,7 @@
       background: var(--soft); outline: none;
     }
     .search-wrap input:focus, .catalog-controls select:focus { border-color: #6da6c8; box-shadow: 0 0 0 3px #e4f0f7; }
-    .catalog-controls { padding: 0 10px 6px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .catalog-controls { padding: 0 10px 6px; }
     .catalog-controls select { min-width: 0; padding: 8px 9px; font-size: 11px; }
     .catalog-summary { padding: 0 12px 6px; color: var(--muted); font-size: 10px; }
     .catalog-summary strong { color: var(--ink); }
@@ -226,7 +226,7 @@
         <select id="study-select" aria-label="Select study">
           <option value="SPI-611" selected>SPI-611</option>
         </select>
-        <span class="availability">1 study available in Azure</span>
+        <span class="availability">1 study available</span>
       </div>
     </aside>
 
@@ -259,11 +259,6 @@
               <div class="search-wrap"><input id="variable-search" type="search" placeholder="Dataset, variable, label, type…" aria-label="Search variable catalog"></div>
               <div class="catalog-controls">
                 <select id="dataset-filter" aria-label="Filter by dataset"><option value="">All datasets</option></select>
-                <select id="coverage-filter" aria-label="Filter by evidence coverage">
-                  <option value="">All coverage</option>
-                  <option value="curated">Curated trace</option>
-                  <option value="metadata">Metadata only</option>
-                </select>
               </div>
               <div id="catalog-summary" class="catalog-summary">Loading metadata…</div>
               <div id="variable-list" class="variable-list"></div>
@@ -469,12 +464,8 @@
     function filteredRecords() {
       const query = document.getElementById("variable-search").value.trim().toLowerCase();
       const dataset = document.getElementById("dataset-filter").value;
-      const coverage = document.getElementById("coverage-filter").value;
       return metadataRecords.filter(record => {
         if (dataset && record.dataset !== dataset) return false;
-        const curated = isCurated(record);
-        if (coverage === "curated" && !curated) return false;
-        if (coverage === "metadata" && curated) return false;
         if (!query) return true;
         const haystack = `${record.dataset} ${record.variable} ${record.id} ${record.label} ${record.type} ${record.format}`.toLowerCase();
         return haystack.includes(query);
@@ -592,7 +583,6 @@
 
     document.getElementById("variable-search").addEventListener("input", renderVariables);
     document.getElementById("dataset-filter").addEventListener("change", renderVariables);
-    document.getElementById("coverage-filter").addEventListener("change", renderVariables);
     document.getElementById("study-select").addEventListener("change", event => {
       const studyId = event.target.value;
       document.getElementById("study-blueprint-title").textContent = `${studyId} Study Blueprint`;
