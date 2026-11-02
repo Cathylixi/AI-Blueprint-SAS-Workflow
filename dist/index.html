@@ -166,6 +166,7 @@
     .node-copy span { font-size: 10px; color: var(--muted); display: block; margin-top: 2px; line-height: 1.3; }
     .status { font-size: 10px; font-weight: 700; border-radius: 999px; padding: 5px 7px; white-space: nowrap; }
     .status.verified { background: var(--green-soft); color: var(--green); }
+    .status.connected, .status.selected { background: var(--green-soft); color: var(--green); }
     .status.gap { background: var(--red-soft); color: var(--red); }
 
     .evidence-stack { min-height: 0; overflow: hidden; display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 12px; }
@@ -275,18 +276,33 @@
     #connector-layer { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; overflow: visible; }
     .connector { fill: none; stroke: #5f93b4; stroke-width: 2; opacity: .85; }
     .connector-dot { fill: #5f93b4; }
-    .selected-lane { min-width: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 6px; }
+    .connector.source-supported, .catalog-connector.source-supported { stroke-dasharray: none; opacity: .85; }
+    .connector-dot.source-supported, .catalog-connector-dot.source-supported { opacity: 1; }
+    .selected-lane { min-width: 0; display: grid; grid-template-rows: auto auto; align-content: start; gap: 6px; }
     .lane-label { color: var(--blue-2); font-size: 9px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
+    .selected-node-stack { min-width: 0; display: grid; align-content: start; gap: 6px; }
+    .selected-node-stack.expanded { max-height: 260px; overflow-y: auto; padding-right: 2px; }
     .selected-card {
       min-width: 0; width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 10px;
       background: white; color: var(--ink); text-align: left; position: relative; box-shadow: 0 6px 14px rgba(24,56,80,.05);
     }
-    .selected-card:hover, .selected-card.active { border-color: #6fa5c5; background: #f7fbfd; }
+    .selected-card:hover, .selected-card.connected { border-color: #6fa5c5; background: #f7fbfd; }
+    .selected-card.selected {
+      border-color: #c8444d; background: #fff1f2; color: #7f1720;
+      box-shadow: inset 3px 0 0 #c8444d, 0 6px 14px rgba(105,24,32,.08);
+    }
     .selected-card.gap { border-style: dashed; background: #fffafa; }
     .selected-card strong { display: block; font-size: 11px; line-height: 1.25; overflow-wrap: anywhere; }
     .selected-card span { display: block; margin-top: 4px; color: var(--muted); font-size: 9px; line-height: 1.35; overflow-wrap: anywhere; }
     .selected-card .card-status { margin-top: 7px; font-weight: 750; color: var(--green); }
+    .selected-card[data-evidence="Source-supported"] .card-status { color: #a96700; }
     .selected-card.gap .card-status { color: var(--red); }
+    .more-card {
+      width: 100%; border: 1px dashed #8ebbd3; border-radius: 9px; padding: 7px 8px;
+      background: #f4f9fc; color: var(--blue); text-align: center; font-size: 9px; font-weight: 800;
+    }
+    .more-card:hover { background: var(--blue-soft); }
+    .more-card.collapse { position: sticky; bottom: 0; z-index: 3; box-shadow: 0 -5px 10px rgba(244,249,252,.95); }
     .catalog-board { min-height: 0; overflow-x: auto; overflow-y: hidden; }
     .catalog-canvas { min-width: 820px; height: 100%; position: relative; }
     .catalog-grid { height: 100%; display: grid; grid-template-columns: repeat(7, minmax(104px, 1fr)); gap: 8px; position: relative; z-index: 1; }
@@ -306,8 +322,11 @@
     }
     .artifact-item:hover { background: var(--soft); }
     .artifact-item.active { background: var(--blue-soft); border-color: #b9d6e6; color: var(--blue); }
-    .artifact-item.related { background: #f6fbfd; }
-    .artifact-item.trace-linked { background: var(--blue-soft); border-color: #8ebbd3; color: var(--blue); box-shadow: inset 3px 0 0 #4d8fb7; }
+    .artifact-item.connected-node { background: var(--blue-soft); border-color: #8ebbd3; color: var(--blue); box-shadow: inset 3px 0 0 #4d8fb7; }
+    .artifact-item.selected-node {
+      background: #fff1f2; border-color: #c8444d; color: #7f1720;
+      box-shadow: inset 3px 0 0 #c8444d;
+    }
     .artifact-item strong { display: block; font-size: 10px; line-height: 1.25; overflow-wrap: anywhere; }
     .artifact-item span { display: block; margin-top: 3px; color: var(--muted); font-size: 9px; line-height: 1.3; overflow-wrap: anywhere; }
     .artifact-item.active span { color: #527c97; }
@@ -378,7 +397,7 @@
             <section class="panel trace-panel">
               <div class="trace-title">
                 <div><div class="eyebrow">Selected trace</div><h2 id="trace-title">Serious adverse event</h2><p id="trace-subtitle">Reverse trace from planned output to protocol evidence</p></div>
-                <span id="trace-status" class="pill green">6 verified links</span>
+                <span id="trace-status" class="pill green">Loading relationships…</span>
               </div>
               <div id="trace-grid" class="trace-grid" aria-label="Trace chain"></div>
             </section>
@@ -440,7 +459,7 @@
           {type:"SDTM", title:"AE.AESER", detail:"aCRF domain and variable annotation", ref:"aCRF annotation · page 55", quote:"Domain AE · AESER", highlight:"AESER", status:"verified", rationale:"The annotated CRF explicitly assigns the field to AE.AESER."},
           {type:"ADaM", title:"No verified ADaM derivation mapped", detail:"AE.AESER and ADAE.AESER are different variables", ref:"ADaM specification · not supplied", quote:"No verified derivation from AE.AESER to an ADaM variable has been supplied.", highlight:"No verified", status:"gap", rationale:"A matching variable name does not establish equivalence or a derivation relationship."},
           {type:"SAP", title:"Sections 5.4 and 5.10.3", detail:"Safety population and AE analysis rules", ref:"SAP 3.0 · pp. 8 and 17", quote:"Safety analysis will include treated randomized patients. Serious adverse events will be listed by patient.", highlight:"Serious adverse events", status:"verified", rationale:"The SAP defines both the population and the analysis of serious AEs."},
-          {type:"Shell", title:"Table 14.3.1.1.1.1", detail:"Overall Summary of Treatment Emergent Adverse Events", ref:"SAP 3.0 · page 54", quote:"Patients with any serious AE · n (%) by treatment group", highlight:"Patients with any serious AE", status:"verified", rationale:"The planned row is the downstream presentation of the serious AE concept."}
+          {type:"Shell", title:"Table 14.3.1.1.1.1 — Overall Summary of Treatment Emergent Adverse Events", detail:"Overall TEAE summary", ref:"SAP 3.0 · TFL page 36", quote:"Patients with any serious AE · n (%) by treatment group", highlight:"serious AE", status:"verified", rationale:"The SPI-611 SAP shell includes the downstream summary of serious adverse events."}
         ]
       },
       AETERM: {
@@ -455,7 +474,7 @@
           {type:"SDTM", title:"AE.AETERM", detail:"aCRF variable annotation", ref:"aCRF annotation · page 55", quote:"Domain AE · AETERM", highlight:"AETERM", status:"verified", rationale:"The aCRF maps the field directly to AETERM."},
           {type:"ADaM", title:"No verified ADaM derivation mapped", detail:"No analysis-variable relationship has been documented", ref:"ADaM specification · not supplied", quote:"No verified derivation from AE.AETERM to an ADaM variable has been supplied.", highlight:"No verified", status:"gap", rationale:"Metadata fields with similar names do not prove a transformation or coding relationship."},
           {type:"SAP", title:"Section 5.10.3", detail:"Code by MedDRA and group by PT and SOC", ref:"SAP 3.0 · page 17", quote:"Adverse events will be coded using MedDRA and grouped by preferred term and system organ class.", highlight:"preferred term", status:"verified", rationale:"The SAP defines the coding and grouping method."},
-          {type:"Shell", title:"Table 14.3.1.1.2.1", detail:"TEAEs by SOC and PT", ref:"SAP 3.0 · page 55", quote:"System Organ Class / Preferred Term · Patients having at least one AE", highlight:"Preferred Term", status:"verified", rationale:"The output presents coded terms downstream of AETERM."}
+          {type:"Shell", title:"Table 14.3.1.1.2.1 — Summary of Treatment Emergent Adverse Events by SOC and PT", detail:"TEAEs by system organ class and preferred term", ref:"SAP 3.0 · TFL page 37", quote:"System Organ Class / Preferred Term · Patients having at least one AE", highlight:"Preferred Term", status:"verified", rationale:"The SPI-611 SAP shell presents coded terms downstream of AETERM."}
         ]
       },
       AESEV: {
@@ -470,7 +489,7 @@
           {type:"SDTM", title:"AE.AETOXGR", detail:"aCRF annotation beside Toxicity Grade", ref:"aCRF annotation · page 55", quote:"AETOXGR", highlight:"AETOXGR", status:"gap", rationale:"The annotation is AETOXGR while raw metadata uses AESEV. This requires review."},
           {type:"ADaM", title:"No verified ADaM derivation mapped", detail:"AE.AESEV and ADAE.AESEV are different variables", ref:"ADaM specification · not supplied", quote:"No verified derivation from AE.AESEV to an ADaM variable has been supplied.", highlight:"No verified", status:"gap", rationale:"A matching variable name does not establish equivalence or a derivation relationship."},
           {type:"SAP", title:"Section 5.10.3", detail:"Grade by NCI CTCAE and summarize severity", ref:"SAP 3.0 · page 17", quote:"Adverse events will be graded according to NCI CTCAE version 3.0.", highlight:"graded", status:"verified", rationale:"The SAP confirms how severity is classified and summarized."},
-          {type:"Shell", title:"Table 14.3.1.1.4.1", detail:"TEAEs by SOC, PT and worst severity", ref:"SAP 3.0 · page 56", quote:"At Least One AE by Severity · Grades 1, 2, 3, 4, 5 and Total", highlight:"Severity", status:"verified", rationale:"The shell is the direct output for maximum severity."}
+          {type:"Shell", title:"Table 14.3.1.1.4.1 — Summary of TEAEs by SOC, PT and Worst Severity", detail:"TEAEs by SOC, PT and worst severity", ref:"SAP 3.0 · TFL page 38", quote:"At Least One AE by Severity", highlight:"Severity", status:"verified", rationale:"The SPI-611 SAP shell is the direct output for worst severity."}
         ]
       },
       AEREL: {
@@ -485,7 +504,7 @@
           {type:"SDTM", title:"AE.AEREL", detail:"aCRF variable annotation", ref:"aCRF annotation · page 55", quote:"Domain AE · AEREL", highlight:"AEREL", status:"verified", rationale:"The annotated CRF maps the field to AEREL."},
           {type:"ADaM", title:"No verified ADaM derivation mapped", detail:"AE.AEREL and ADAE.AEREL are different variables", ref:"ADaM specification · not supplied", quote:"No verified derivation from AE.AEREL to an ADaM variable has been supplied.", highlight:"No verified", status:"gap", rationale:"A matching variable name does not establish equivalence or a derivation relationship."},
           {type:"SAP", title:"Section 5.10.3", detail:"Treatment-related definition", ref:"SAP 3.0 · page 17", quote:"Treatment-related adverse events are TEAEs with possible, probable or definite relationship.", highlight:"possible, probable or definite", status:"verified", rationale:"The SAP converts relationship categories into the related-AE analysis rule."},
-          {type:"Shell", title:"Table 14.3.1.5.1", detail:"Related adverse events by SOC and PT", ref:"SAP 3.0 · page 57", quote:"Patients having at least one related AE", highlight:"related AE", status:"verified", rationale:"The shell displays the downstream related-AE result."}
+          {type:"Shell", title:"Table 14.3.1.5.1 — Summary of Related Adverse Events by SOC and PT", detail:"Related adverse events by SOC and PT", ref:"SAP 3.0 · TFL page 39", quote:"Patients having at least one related AE", highlight:"related AE", status:"verified", rationale:"The SPI-611 SAP shell displays the downstream related-AE result."}
         ]
       },
       AEOUT: {
@@ -500,7 +519,7 @@
           {type:"SDTM", title:"AE.AEOUT", detail:"aCRF variable annotation", ref:"aCRF annotation · page 55", quote:"Domain AE · AEOUT", highlight:"AEOUT", status:"verified", rationale:"The annotated CRF maps Outcome to AEOUT."},
           {type:"ADaM", title:"No verified ADaM derivation mapped", detail:"AE.AEOUT and ADAE.AEOUT are different variables", ref:"ADaM specification · not supplied", quote:"No verified derivation from AE.AEOUT to an ADaM variable has been supplied.", highlight:"No verified", status:"gap", rationale:"A matching variable name does not establish equivalence or a derivation relationship."},
           {type:"SAP", title:"Section 5.10.3", detail:"Serious events and discontinuations", ref:"SAP 3.0 · page 17", quote:"Serious adverse events and adverse events resulting in premature discontinuation will be listed by patient.", highlight:"premature discontinuation", status:"verified", rationale:"The SAP identifies outcomes requiring separate analysis."},
-          {type:"Shell", title:"Table 14.3.1.1.1.1", detail:"Overall TEAE summary", ref:"SAP 3.0 · page 54", quote:"Patients with any treatment emergent AE resulting in death within 30 days of last dose", highlight:"resulting in death", status:"verified", rationale:"The planned output presents the fatal outcome count."}
+          {type:"Shell", title:"Table 14.3.1.1.1.1 — Overall Summary of Treatment Emergent Adverse Events", detail:"Overall TEAE summary", ref:"SAP 3.0 · TFL page 36", quote:"Patients with any treatment emergent AE resulting in death", highlight:"resulting in death", status:"verified", rationale:"The SPI-611 SAP shell presents the downstream fatal-outcome count."}
         ]
       }
     };
@@ -516,11 +535,19 @@
     ];
     const analysisDatasets = new Set(["ADAE", "XEFF"]);
     let metadataRecords = [];
+    let sourceCatalogs = {protocol:{items:[]}, crf:{items:[]}, sdtm:{items:[]}, sap:{items:[]}, tfl:{items:[]}};
+    let connectionRegistry = {nodes:[], connections:[]};
     let recordsById = new Map();
     let catalogs = new Map();
+    let graphNodes = new Map();
+    let graphEdges = [];
+    let graphAdjacency = new Map();
     let selectedRecordId = "AE.AESER";
     let selectedStage = "Protocol";
+    let selectedNodeId = null;
     let overviewSelectedNode = 0;
+    const TOP_NODE_LIMIT = 3;
+    const expandedTopStages = new Set();
 
     function escapeHTML(value) {
       return String(value ?? "").replace(/[&<>'"]/g, character => ({
@@ -538,7 +565,8 @@
     }
 
     function statusLabel(status) {
-      return status === "verified" ? "Verified" : "Gap";
+      if (status === "selected") return "Selected";
+      return status === "gap" ? "Gap" : "Linked";
     }
 
     function canonicalType(type) {
@@ -568,15 +596,15 @@
 
     function gapNode(layer) {
       const copy = {
-        Protocol:["No protocol section mapped", "Variable-level protocol linkage was not supplied", "Protocol Amendment 6 · mapping not available"],
-        CRF:["No CRF field mapped", "Field-level annotation was not identified", "aCRF · field mapping not available"],
-        Raw:["No raw variable mapped", "No source-variable relationship has been verified", "Raw mapping specification · not supplied"],
-        SDTM:["No SDTM mapping supplied", "Standard-variable conformance is not verified", "SDTM mapping specification · not supplied"],
-        ADaM:["No ADaM derivation mapped", "No analysis-variable relationship has been verified", "ADaM specification · not supplied"],
-        SAP:["No SAP rule mapped", "No variable-level analysis rule has been linked", "SAP 3.0 · variable mapping not available"],
-        Output:["No TFL mapped", "No table, listing or figure row has been linked", "SAP TFL shells · mapping not available"]
+        Protocol:["No protocol section mapped", "No protocol relationship is available for this artifact", "Protocol Amendment 6 · mapping not available"],
+        CRF:["No CRF field mapped", "No CRF relationship is available for this artifact", "aCRF · field mapping not available"],
+        Raw:["No raw variable mapped", "No raw-data relationship is available for this artifact", "Raw mapping · not available"],
+        SDTM:["No SDTM variable mapped", "No SDTM relationship is available for this artifact", "SDTM mapping · not available"],
+        ADaM:["No ADaM variable mapped", "No ADaM relationship is available for this artifact", "ADaM mapping · not available"],
+        SAP:["No SAP section mapped", "No SAP relationship is available for this artifact", "SAP 3.0 · mapping not available"],
+        Output:["No TFL mapped", "No table, listing or figure relationship is available", "TFL mapping · not available"]
       }[layer];
-      return {type:layer, title:copy[0], detail:copy[1], ref:copy[2], quote:"No verified relationship is available for this layer.", status:"gap", rationale:"A connector is shown only when a reviewed source explicitly supports the relationship."};
+      return {type:layer, title:copy[0], detail:copy[1], ref:copy[2], quote:"No relationship is available for this layer.", status:"gap", rationale:"The current relationship registry does not contain a connection for this layer."};
     }
 
     function buildGenericTrace(record) {
@@ -632,14 +660,55 @@
       };
     }
 
-    function buildOverviewTrace(record) {
-      if (!isCurated(record)) return buildOverviewGenericTrace(record);
-      const base = traces[record.variable];
+    function overviewRegistryNode(item, focus, relatedCount) {
+      const source = item.sourceNode || {};
+      const selected = item.nodeId === selectedNodeId;
+      const connection = connectionRegistry.connections.find(candidate => {
+        const touchesNode = candidate.from_node_id === item.nodeId || candidate.to_node_id === item.nodeId;
+        return touchesNode && focus.nodeIds.has(candidate.from_node_id) && focus.nodeIds.has(candidate.to_node_id);
+      });
+      const detailParts = [source.details || item.detail].filter(Boolean);
+      if (relatedCount > 1) detailParts.push(`+${relatedCount - 1} additional linked artifact${relatedCount > 2 ? "s" : ""}`);
+      const basis = connection?.evidence_basis || (selected ? "Selected study artifact from the relationship registry." : "Connected through the study relationship registry.");
       return {
-        ...base,
-        label: `${record.id} — ${record.label}`,
-        subtitle: `${base.subtitle} · curated end-to-end example`,
-        curated: true
+        type:item.stage,
+        title:registryNodeTitle(source),
+        detail:detailParts.join(" · "),
+        ref:[source.source_file, source.anchor].filter(Boolean).join(" · "),
+        quote:basis,
+        highlight:source.variable || source.section || source.table_id || source.label || "",
+        status:selected ? "selected" : "connected",
+        rationale:basis,
+        nodeId:item.nodeId
+      };
+    }
+
+    function buildOverviewTrace(record) {
+      const focus = focusedGraph();
+      const nodes = [];
+      let linkedLayers = 0;
+      let firstTflItem = null;
+      layers.forEach(layer => {
+        const related = focusNodesForStage(layer.key, focus);
+        if (!related.length) {
+          nodes.push(gapNode(layer.key));
+          return;
+        }
+        linkedLayers += 1;
+        const representative = related.find(item => item.nodeId === selectedNodeId) || related[0];
+        nodes.push(overviewRegistryNode(representative, focus, related.length));
+        if (layer.key === "Output") firstTflItem = representative;
+      });
+      const curated = traces[record.variable];
+      return {
+        label:`${record.id} — ${record.label}`,
+        subtitle:`${record.type} metadata record · variable order ${record.order}`,
+        status:`${linkedLayers} of ${layers.length} layers linked`,
+        nodes,
+        hasGaps:linkedLayers < layers.length,
+        shellPreview:Boolean(curated && firstTflItem),
+        row:curated?.row || "",
+        tflNode:firstTflItem ? overviewRegistryNode(firstTflItem, focus, 1) : null
       };
     }
 
@@ -667,10 +736,14 @@
         const button = document.createElement("button");
         button.type = "button";
         button.className = `variable${record.id === selectedRecordId ? " active" : ""}`;
-        button.innerHTML = `<code>${escapeHTML(record.id)}</code><span>${escapeHTML(record.label)}</span><span class="variable-meta"><span>${escapeHTML(record.type)}</span><span>Order ${record.order}</span>${isCurated(record) ? '<span>Curated trace</span>' : ""}</span>`;
+        const recordNodeId = `${analysisDatasets.has(record.dataset) ? "ADAM" : "RAW"}:${record.id}`;
+        const linked = (graphAdjacency.get(recordNodeId) || []).length > 0;
+        button.innerHTML = `<code>${escapeHTML(record.id)}</code><span>${escapeHTML(record.label)}</span><span class="variable-meta"><span>${escapeHTML(record.type)}</span><span>Order ${record.order}</span>${linked ? '<span>Linked</span>' : ""}</span>`;
         button.addEventListener("click", () => {
           selectedRecordId = record.id;
           selectedStage = analysisDatasets.has(record.dataset) ? "ADaM" : "Raw";
+          const preferredNodeId = `${selectedStage === "ADaM" ? "ADAM" : "RAW"}:${record.id}`;
+          if (graphNodes.has(preferredNodeId)) selectedNodeId = preferredNodeId;
           overviewSelectedNode = 0;
           renderOverview();
           renderBlueprint();
@@ -681,6 +754,7 @@
     }
 
     function renderOverviewEvidence(node) {
+      const statusText = node.status === "gap" ? "Mapping gap" : node.status === "selected" ? "Selected" : "Linked";
       document.getElementById("evidence-body").innerHTML = `
         <div>
           <div class="evidence-ref">${escapeHTML(node.ref)}</div>
@@ -689,11 +763,11 @@
           <div class="quote">${highlight(node.quote, node.highlight)}</div>
           <div class="evidence-meta">
             <div class="meta-row"><span>Layer</span><strong>${escapeHTML(displayType(node.type))}</strong></div>
-            <div class="meta-row"><span>Status</span><strong>${escapeHTML(node.status === "verified" ? "Verified" : "Mapping gap")}</strong></div>
+            <div class="meta-row"><span>Status</span><strong>${escapeHTML(statusText)}</strong></div>
             <div class="meta-row"><span>Study</span><strong>SPI-611</strong></div>
           </div>
         </div>
-        <div class="rationale"><strong>Why this link exists</strong><p>${escapeHTML(node.rationale)}</p></div>`;
+        <div class="rationale"><strong>${node.status === "gap" ? "Why no link is shown" : "Why this link exists"}</strong><p>${escapeHTML(node.rationale)}</p></div>`;
     }
 
     function renderOverviewTrace() {
@@ -705,13 +779,12 @@
       document.getElementById("trace-subtitle").textContent = trace.subtitle;
       const badge = document.getElementById("trace-status");
       badge.textContent = trace.status;
-      badge.className = `pill ${trace.curated && !trace.status.toLowerCase().includes("gap") ? "green" : "amber"}`;
+      badge.className = `pill ${trace.hasGaps ? "amber" : "green"}`;
 
       const shellPreview = document.getElementById("mock-shell-preview");
-      shellPreview.hidden = !trace.curated;
-      if (trace.curated) {
-        const shellNode = trace.nodes.find(node => canonicalType(node.type) === "Output");
-        document.getElementById("shell-title").textContent = shellNode ? `${shellNode.title} ${shellNode.detail}` : "Mapped TFL";
+      shellPreview.hidden = !trace.shellPreview;
+      if (trace.shellPreview) {
+        document.getElementById("shell-title").textContent = trace.tflNode ? `${trace.tflNode.title} ${trace.tflNode.detail}` : "Mapped TFL";
         document.getElementById("shell-active-row").firstElementChild.textContent = trace.row;
       }
 
@@ -736,135 +809,290 @@
       renderOverviewTrace();
     }
 
+    function registryStageKey(stage) {
+      return stage === "TFL" ? "Output" : stage;
+    }
+
+    function registryNodeTitle(node) {
+      if (node.stage === "Protocol") return `Section ${node.section} — ${node.label}`;
+      if (node.stage === "CRF") return `${node.form} · ${node.label} · p. ${node.page}`;
+      if (node.stage === "SAP") return `Section ${node.section} — ${node.label}`;
+      if (node.stage === "TFL") return `Table ${node.table_id} — ${node.label}`;
+      return node.artifact_id;
+    }
+
     function buildCatalogs() {
       const next = new Map(layers.map(layer => [layer.key, []]));
-      Object.entries(traces).forEach(([traceKey, trace]) => {
-        trace.nodes.forEach((node, nodeIndex) => {
-          const stage = canonicalType(node.type);
-          if (stage === "Raw" || stage === "ADaM" || !next.has(stage)) return;
-          next.get(stage).push({
-            id:`${traceKey}:${stage}:${nodeIndex}`,
-            title:node.title,
-            detail:node.detail,
-            traceKey,
-            stage,
-            node
-          });
+      connectionRegistry.nodes.forEach(node => {
+        const stage = registryStageKey(node.stage);
+        const list = next.get(stage);
+        if (!list) return;
+        list.push({
+          id:node.node_id,
+          nodeId:node.node_id,
+          title:registryNodeTitle(node),
+          detail:node.details || node.anchor || "",
+          stage,
+          recordId:(stage === "Raw" || stage === "ADaM") ? node.artifact_id : null,
+          sourceNode:node,
+          traceKeys:[]
         });
       });
 
-      metadataRecords.forEach(record => {
-        const stage = analysisDatasets.has(record.dataset) ? "ADaM" : "Raw";
-        next.get(stage).push({
-          id:record.id,
-          title:record.id,
-          detail:`${record.label} · ${record.type}`,
-          traceKey:isCurated(record) ? record.variable : null,
-          recordId:record.id,
-          stage
-        });
-      });
       catalogs = next;
+      graphNodes = new Map();
+      graphEdges = [];
+      graphAdjacency = new Map();
+      layers.forEach((layer, layerIndex) => {
+        (catalogs.get(layer.key) || []).forEach((item, catalogIndex) => {
+          item.layerIndex = layerIndex;
+          item.catalogIndex = catalogIndex;
+          graphNodes.set(item.nodeId, item);
+          graphAdjacency.set(item.nodeId, []);
+        });
+      });
+
+      const edgesByPair = new Map();
+      connectionRegistry.connections.forEach(connection => {
+        const first = graphNodes.get(connection.from_node_id);
+        const second = graphNodes.get(connection.to_node_id);
+        if (!first || !second || first.nodeId === second.nodeId) return;
+        const key = [first.nodeId, second.nodeId].sort().join("|");
+        let edge = edgesByPair.get(key);
+        if (!edge) {
+          const left = first.layerIndex <= second.layerIndex ? first : second;
+          const right = left === first ? second : first;
+          edge = {
+            from:left.nodeId,
+            to:right.nodeId,
+            evidenceClass:connection.evidence_class,
+            connectionIds:[connection.connection_id],
+            ruleIds:[connection.rule_id]
+          };
+          edgesByPair.set(key, edge);
+          graphEdges.push(edge);
+        } else {
+          if (connection.evidence_class === "Verified") edge.evidenceClass = "Verified";
+          if (!edge.connectionIds.includes(connection.connection_id)) edge.connectionIds.push(connection.connection_id);
+          if (!edge.ruleIds.includes(connection.rule_id)) edge.ruleIds.push(connection.rule_id);
+        }
+      });
+      graphEdges.forEach(edge => {
+        graphAdjacency.get(edge.from).push({nodeId:edge.to, evidenceClass:edge.evidenceClass});
+        graphAdjacency.get(edge.to).push({nodeId:edge.from, evidenceClass:edge.evidenceClass});
+      });
+
+      const preferred = graphNodes.get(`RAW:${selectedRecordId}`) || graphNodes.get(`ADAM:${selectedRecordId}`);
+      if (!selectedNodeId || !graphNodes.has(selectedNodeId)) selectedNodeId = preferred?.nodeId || graphNodes.keys().next().value;
     }
 
-    function currentTrace() {
-      const record = recordsById.get(selectedRecordId);
-      return record ? buildTrace(record) : null;
+    function focusedGraph() {
+      const distances = new Map();
+      const pathClass = new Map();
+      if (!selectedNodeId || !graphNodes.has(selectedNodeId)) return {distances, nodeIds:new Set(), pathClass};
+      const selectedNode = graphNodes.get(selectedNodeId);
+      distances.set(selectedNodeId, 0);
+      pathClass.set(selectedNodeId, "Selected");
+
+      const combineEvidence = (parentClass, edgeClass) => {
+        if (parentClass === "Selected") return edgeClass;
+        return parentClass === "Verified" && edgeClass === "Verified" ? "Verified" : "Source-supported";
+      };
+      const stronger = (first, second) => first === "Verified" || second === "Verified" ? "Verified" : "Source-supported";
+      const walk = direction => {
+        const localDistances = new Map([[selectedNodeId, 0]]);
+        const localClasses = new Map([[selectedNodeId, "Selected"]]);
+        const queue = [selectedNodeId];
+        while (queue.length) {
+          const nodeId = queue.shift();
+          const item = graphNodes.get(nodeId);
+          const distance = localDistances.get(nodeId);
+          const parentClass = localClasses.get(nodeId);
+          (graphAdjacency.get(nodeId) || []).forEach(link => {
+            const next = graphNodes.get(link.nodeId);
+            if (!next) return;
+            if (direction < 0 && next.layerIndex >= item.layerIndex) return;
+            if (direction > 0 && next.layerIndex <= item.layerIndex) return;
+            if (next.layerIndex === selectedNode.layerIndex && next.nodeId !== selectedNodeId) return;
+            const nextDistance = distance + 1;
+            const nextClass = combineEvidence(parentClass, link.evidenceClass);
+            const previousDistance = localDistances.get(next.nodeId);
+            const previousClass = localClasses.get(next.nodeId);
+            const shouldUpdate = previousDistance === undefined || nextDistance < previousDistance || (nextDistance === previousDistance && previousClass === "Source-supported" && nextClass === "Verified");
+            if (!shouldUpdate) return;
+            localDistances.set(next.nodeId, nextDistance);
+            localClasses.set(next.nodeId, previousClass ? stronger(previousClass, nextClass) : nextClass);
+            queue.push(next.nodeId);
+          });
+        }
+        localDistances.forEach((distance, nodeId) => {
+          if (nodeId === selectedNodeId) return;
+          const priorDistance = distances.get(nodeId);
+          const currentClass = localClasses.get(nodeId);
+          if (priorDistance === undefined || distance < priorDistance) {
+            distances.set(nodeId, distance);
+            pathClass.set(nodeId, currentClass);
+          } else if (distance === priorDistance) {
+            pathClass.set(nodeId, stronger(pathClass.get(nodeId), currentClass));
+          }
+        });
+      };
+
+      walk(-1);
+      walk(1);
+      return {distances, nodeIds:new Set(distances.keys()), pathClass};
     }
 
-    function nodeForStage(trace, stage) {
-      return trace.nodes.find(node => canonicalType(node.type) === stage) || gapNode(stage);
+    function focusNodesForStage(stage, focus) {
+      return (catalogs.get(stage) || []).filter(item => focus.nodeIds.has(item.nodeId)).sort((a, b) => {
+        const distanceDifference = (focus.distances.get(a.nodeId) || 0) - (focus.distances.get(b.nodeId) || 0);
+        return distanceDifference || a.catalogIndex - b.catalogIndex;
+      });
     }
 
-    function renderEvidenceStrip(node) {
-      const strip = document.getElementById("evidence-strip");
-      if (!strip) return;
-      strip.innerHTML = `<strong>${escapeHTML(node.ref)}</strong><span>${escapeHTML(node.rationale)}</span>`;
+    function equalizeSelectedCardHeights() {
+      const cards = [...document.querySelectorAll("#selected-lanes .selected-card:not(.gap)")];
+      cards.forEach(card => { card.style.height = "auto"; });
+      const height = Math.max(0, ...cards.map(card => Math.ceil(card.scrollHeight)));
+      if (height) cards.forEach(card => { card.style.height = `${height}px`; });
+    }
+
+    function compactNodeTitle(item) {
+      if (item.stage === "Protocol" || item.stage === "SAP" || item.stage === "Output") {
+        return item.title.split(" — ")[0];
+      }
+      if (item.stage === "CRF") {
+        return item.title.split(" · ").slice(0, 2).join(" · ");
+      }
+      return item.title;
     }
 
     function renderSelectedBlueprint() {
-      const trace = currentTrace();
-      if (!trace) return;
       const lanes = document.getElementById("selected-lanes");
+      const focus = focusedGraph();
       lanes.innerHTML = "";
       layers.forEach(layer => {
-        const node = nodeForStage(trace, layer.key);
         const lane = document.createElement("div");
         lane.className = "selected-lane";
         lane.innerHTML = `<div class="lane-label">${escapeHTML(layer.label)}</div>`;
-        const card = document.createElement("button");
-        card.type = "button";
-        card.className = `selected-card ${node.status === "gap" ? "gap" : ""}${selectedStage === layer.key ? " active" : ""}`;
-        card.dataset.stage = layer.key;
-        card.dataset.status = node.status;
-        card.innerHTML = `<strong>${escapeHTML(node.title)}</strong><span class="card-status">${node.status === "verified" ? "Verified" : "Mapping gap"}</span>`;
-        card.addEventListener("click", () => {
-          selectedStage = layer.key;
-          renderSelectedBlueprint();
-        });
-        lane.appendChild(card);
+        const stack = document.createElement("div");
+        stack.className = "selected-node-stack";
+        const nodes = focusNodesForStage(layer.key, focus);
+        const expanded = expandedTopStages.has(layer.key);
+        if (expanded) stack.classList.add("expanded");
+        if (!nodes.length) {
+          const gap = document.createElement("div");
+          gap.className = "selected-card gap";
+          gap.innerHTML = `<strong>No connections</strong><span class="card-status">Not evidenced</span>`;
+          stack.appendChild(gap);
+        } else {
+          const visibleNodes = expanded ? nodes : nodes.slice(0, TOP_NODE_LIMIT);
+          visibleNodes.forEach(item => {
+            const card = document.createElement("button");
+            card.type = "button";
+            card.className = `selected-card ${item.nodeId === selectedNodeId ? "selected" : "connected"}`;
+            card.dataset.nodeId = item.nodeId;
+            const relationClass = focus.pathClass.get(item.nodeId) || "Connected";
+            card.dataset.evidence = relationClass;
+            card.innerHTML = `<strong>${escapeHTML(compactNodeTitle(item))}</strong>${item.nodeId === selectedNodeId ? '<span class="card-status">Selected</span>' : ""}`;
+            card.addEventListener("click", () => selectArtifact(item));
+            stack.appendChild(card);
+          });
+          if (nodes.length > TOP_NODE_LIMIT) {
+            const more = document.createElement("button");
+            more.type = "button";
+            more.className = `more-card${expanded ? " collapse" : ""}`;
+            more.textContent = expanded ? "Show less" : `+${nodes.length - TOP_NODE_LIMIT} more`;
+            more.setAttribute("aria-expanded", String(expanded));
+            more.addEventListener("click", () => {
+              if (expanded) expandedTopStages.delete(layer.key); else expandedTopStages.add(layer.key);
+              renderSelectedBlueprint();
+            });
+            stack.appendChild(more);
+          }
+        }
+        stack.addEventListener("scroll", () => requestAnimationFrame(drawConnectors), {passive:true});
+        lane.appendChild(stack);
         lanes.appendChild(lane);
       });
-      requestAnimationFrame(drawConnectors);
+      requestAnimationFrame(() => {
+        equalizeSelectedCardHeights();
+        requestAnimationFrame(drawConnectors);
+      });
+    }
+
+    function drawEdge(svg, cssClass, canvasRect, leftElement, rightElement, evidenceClass) {
+      const a = leftElement.getBoundingClientRect();
+      const b = rightElement.getBoundingClientRect();
+      const leftFirst = a.left <= b.left;
+      const x1 = (leftFirst ? a.right : a.left) - canvasRect.left;
+      const y1 = a.top + a.height / 2 - canvasRect.top;
+      const x2 = (leftFirst ? b.left : b.right) - canvasRect.left;
+      const y2 = b.top + b.height / 2 - canvasRect.top;
+      const bend = Math.max(18, Math.abs(x2 - x1) * .4);
+      const direction = x2 >= x1 ? 1 : -1;
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      const evidenceCss = evidenceClass === "Source-supported" ? " source-supported" : "";
+      path.setAttribute("class", `${cssClass}${evidenceCss}`);
+      path.setAttribute("d", `M ${x1} ${y1} C ${x1 + bend * direction} ${y1}, ${x2 - bend * direction} ${y2}, ${x2} ${y2}`);
+      svg.appendChild(path);
+      [[x1, y1], [x2, y2]].forEach(([cx, cy]) => {
+        const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        dot.setAttribute("class", `${cssClass}-dot${evidenceCss}`);
+        dot.setAttribute("cx", cx); dot.setAttribute("cy", cy); dot.setAttribute("r", 3);
+        svg.appendChild(dot);
+      });
     }
 
     function drawConnectors() {
       const canvas = document.getElementById("selected-canvas");
       const svg = document.getElementById("connector-layer");
       if (!canvas || !svg || document.getElementById("page-blueprint").hidden) return;
+      const elements = new Map([...canvas.querySelectorAll(".selected-card[data-node-id]")].map(element => [element.dataset.nodeId, element]));
+      const focus = focusedGraph();
       const canvasRect = canvas.getBoundingClientRect();
-      const cards = [...canvas.querySelectorAll(".selected-card")];
       svg.setAttribute("viewBox", `0 0 ${canvas.clientWidth} ${canvas.clientHeight}`);
       svg.innerHTML = "";
-      for (let i = 0; i < cards.length - 1; i += 1) {
-        const left = cards[i];
-        const right = cards[i + 1];
-        if (left.dataset.status !== "verified" || right.dataset.status !== "verified") continue;
-        const a = left.getBoundingClientRect();
-        const b = right.getBoundingClientRect();
-        const x1 = a.right - canvasRect.left;
-        const y1 = a.top + a.height / 2 - canvasRect.top;
-        const x2 = b.left - canvasRect.left;
-        const y2 = b.top + b.height / 2 - canvasRect.top;
-        const bend = Math.max(18, (x2 - x1) * .45);
-        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        path.setAttribute("class", "connector");
-        path.setAttribute("d", `M ${x1} ${y1} C ${x1 + bend} ${y1}, ${x2 - bend} ${y2}, ${x2} ${y2}`);
-        svg.appendChild(path);
-        [ [x1,y1], [x2,y2] ].forEach(([cx,cy]) => {
-          const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-          dot.setAttribute("class", "connector-dot"); dot.setAttribute("cx", cx); dot.setAttribute("cy", cy); dot.setAttribute("r", 3);
-          svg.appendChild(dot);
-        });
-      }
+      graphEdges.filter(edge => focus.nodeIds.has(edge.from) && focus.nodeIds.has(edge.to)).forEach(edge => {
+        const from = elements.get(edge.from); const to = elements.get(edge.to);
+        if (from && to && isVisibleInSelectedStack(from) && isVisibleInSelectedStack(to)) drawEdge(svg, "connector", canvasRect, from, to, edge.evidenceClass);
+      });
+    }
+
+    function isVisibleInSelectedStack(element) {
+      const stack = element.closest(".selected-node-stack");
+      if (!stack || !stack.classList.contains("expanded")) return true;
+      const itemRect = element.getBoundingClientRect();
+      const stackRect = stack.getBoundingClientRect();
+      const centerY = itemRect.top + itemRect.height / 2;
+      return centerY >= stackRect.top && centerY <= stackRect.bottom;
     }
 
     function selectArtifact(item) {
-      if (item.recordId) {
-        selectedRecordId = item.recordId;
-      } else if (item.traceKey && recordsById.has(`AE.${item.traceKey}`)) {
-        selectedRecordId = `AE.${item.traceKey}`;
-      }
+      expandedTopStages.clear();
+      selectedNodeId = item.nodeId;
       selectedStage = item.stage;
-      renderBlueprint();
+      if (item.recordId) selectedRecordId = item.recordId;
+      else {
+        const traceKey = item.traceKeys[0];
+        if (traceKey && recordsById.has(`AE.${traceKey}`)) selectedRecordId = `AE.${traceKey}`;
+      }
       overviewSelectedNode = Math.max(0, layers.findIndex(layer => layer.key === item.stage));
+      renderBlueprint();
       renderOverview();
     }
 
     function renderCatalogs() {
       const grid = document.getElementById("catalog-grid");
       const query = document.getElementById("artifact-search").value.trim().toLowerCase();
-      const trace = currentTrace();
+      const focus = focusedGraph();
       grid.innerHTML = "";
       layers.forEach(layer => {
         const allItems = catalogs.get(layer.key) || [];
-        const items = query ? allItems.filter(item => `${item.title} ${item.detail} ${item.traceKey || ""}`.toLowerCase().includes(query)) : allItems;
-        const stageNode = trace ? nodeForStage(trace, layer.key) : null;
-        const linkedItem = layer.key === "Raw" || layer.key === "ADaM"
-          ? items.find(item => item.recordId === selectedRecordId && item.stage === layer.key)
-          : items.find(item => trace && item.traceKey === trace.traceKey && item.node === stageNode);
+        const items = query ? allItems.filter(item => `${item.title} ${item.detail} ${(item.traceKeys || []).join(" ")}`.toLowerCase().includes(query)) : allItems;
         const lane = document.createElement("section");
         lane.className = "panel artifact-lane";
+        lane.dataset.catalogStage = layer.key;
         lane.innerHTML = `<div class="artifact-lane-head"><h3>${escapeHTML(layer.label)}</h3></div>`;
         const list = document.createElement("div");
         list.className = "artifact-list";
@@ -873,16 +1101,12 @@
         } else {
           const fragment = document.createDocumentFragment();
           items.forEach(item => {
-            const active = item.recordId ? item.recordId === selectedRecordId && item.stage === selectedStage : trace && item.traceKey === trace.traceKey && item.stage === selectedStage;
-            const related = !active && trace && item.traceKey && item.traceKey === trace.traceKey;
-            const traceLinked = item === linkedItem && stageNode && stageNode.status === "verified";
+            const selected = item.nodeId === selectedNodeId;
+            const connected = !selected && focus.nodeIds.has(item.nodeId);
             const button = document.createElement("button");
             button.type = "button";
-            button.className = `artifact-item${active ? " active" : related ? " related" : ""}${traceLinked ? " trace-linked" : ""}`;
-            if (traceLinked) {
-              button.dataset.traceLinked = "true";
-              button.dataset.stageIndex = String(layers.findIndex(candidate => candidate.key === layer.key));
-            }
+            button.className = `artifact-item${selected ? " selected-node" : connected ? " connected-node" : ""}`;
+            button.dataset.nodeId = item.nodeId;
             button.innerHTML = `<strong>${escapeHTML(item.title)}</strong>`;
             button.addEventListener("click", () => selectArtifact(item));
             fragment.appendChild(button);
@@ -894,44 +1118,36 @@
         list.addEventListener("scroll", () => requestAnimationFrame(drawCatalogConnectors), {passive:true});
       });
       requestAnimationFrame(() => {
-        grid.querySelectorAll(".artifact-item.trace-linked").forEach(item => item.scrollIntoView({block:"nearest", inline:"nearest"}));
+        grid.querySelector(".artifact-item.selected-node")?.scrollIntoView({block:"nearest", inline:"nearest"});
+        grid.querySelectorAll(".artifact-lane").forEach(lane => {
+          if (!lane.querySelector(".selected-node")) lane.querySelector(".connected-node")?.scrollIntoView({block:"nearest", inline:"nearest"});
+        });
         requestAnimationFrame(drawCatalogConnectors);
       });
+    }
+
+    function isVisibleInCatalog(element) {
+      const list = element.closest(".artifact-list");
+      if (!list) return false;
+      const itemRect = element.getBoundingClientRect();
+      const listRect = list.getBoundingClientRect();
+      const centerY = itemRect.top + itemRect.height / 2;
+      return centerY >= listRect.top && centerY <= listRect.bottom;
     }
 
     function drawCatalogConnectors() {
       const canvas = document.getElementById("catalog-canvas");
       const svg = document.getElementById("catalog-connector-layer");
       if (!canvas || !svg || document.getElementById("page-blueprint").hidden) return;
+      const focus = focusedGraph();
+      const elements = new Map([...canvas.querySelectorAll(".artifact-item[data-node-id]")].map(element => [element.dataset.nodeId, element]));
       const canvasRect = canvas.getBoundingClientRect();
-      const linkedItems = [...canvas.querySelectorAll(".artifact-item.trace-linked")]
-        .sort((a, b) => Number(a.dataset.stageIndex) - Number(b.dataset.stageIndex));
       svg.setAttribute("viewBox", `0 0 ${canvas.clientWidth} ${canvas.clientHeight}`);
       svg.innerHTML = "";
-      for (let i = 0; i < linkedItems.length - 1; i += 1) {
-        const left = linkedItems[i];
-        const right = linkedItems[i + 1];
-        if (Number(right.dataset.stageIndex) - Number(left.dataset.stageIndex) !== 1) continue;
-        const a = left.getBoundingClientRect();
-        const b = right.getBoundingClientRect();
-        const x1 = a.right - canvasRect.left;
-        const y1 = a.top + a.height / 2 - canvasRect.top;
-        const x2 = b.left - canvasRect.left;
-        const y2 = b.top + b.height / 2 - canvasRect.top;
-        const bend = Math.max(18, (x2 - x1) * .45);
-        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        path.setAttribute("class", "catalog-connector");
-        path.setAttribute("d", `M ${x1} ${y1} C ${x1 + bend} ${y1}, ${x2 - bend} ${y2}, ${x2} ${y2}`);
-        svg.appendChild(path);
-        [[x1, y1], [x2, y2]].forEach(([cx, cy]) => {
-          const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-          dot.setAttribute("class", "catalog-connector-dot");
-          dot.setAttribute("cx", cx);
-          dot.setAttribute("cy", cy);
-          dot.setAttribute("r", 3);
-          svg.appendChild(dot);
-        });
-      }
+      graphEdges.filter(edge => focus.nodeIds.has(edge.from) && focus.nodeIds.has(edge.to)).forEach(edge => {
+        const from = elements.get(edge.from); const to = elements.get(edge.to);
+        if (from && to && isVisibleInCatalog(from) && isVisibleInCatalog(to)) drawEdge(svg, "catalog-connector", canvasRect, from, to, edge.evidenceClass);
+      });
     }
 
     function renderBlueprint() {
@@ -955,10 +1171,16 @@
 
     async function loadMetadata() {
       try {
-        const response = await fetch("metadata.json", {cache:"no-cache"});
+        const [response, registryResponse] = await Promise.all([
+          fetch("metadata.json", {cache:"no-cache"}),
+          fetch("connection_registry.json", {cache:"no-cache"})
+        ]);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        if (!registryResponse.ok) throw new Error(`Connection registry HTTP ${registryResponse.status}`);
         const payload = await response.json();
+        connectionRegistry = await registryResponse.json();
         if (!Array.isArray(payload.records)) throw new Error("Metadata records are missing");
+        if (!Array.isArray(connectionRegistry.nodes) || !Array.isArray(connectionRegistry.connections)) throw new Error("Connection registry is missing");
         metadataRecords = payload.records;
         recordsById = new Map(metadataRecords.map(record => [record.id, record]));
         document.getElementById("metadata-record-count").textContent = payload.recordCount.toLocaleString();
@@ -975,9 +1197,9 @@
         renderOverview();
         renderBlueprint();
       } catch (error) {
-        document.getElementById("catalog-summary").textContent = "Metadata could not be loaded.";
-        document.getElementById("variable-list").innerHTML = `<div class="empty-state">The metadata catalog failed to load: ${escapeHTML(error.message)}</div>`;
-        document.getElementById("catalog-grid").innerHTML = `<section class="panel overview-panel"><h2>Metadata could not be loaded</h2><p class="overview-note">${escapeHTML(error.message)}</p></section>`;
+        document.getElementById("catalog-summary").textContent = "Blueprint data could not be loaded.";
+        document.getElementById("variable-list").innerHTML = `<div class="empty-state">The Blueprint data failed to load: ${escapeHTML(error.message)}</div>`;
+        document.getElementById("catalog-grid").innerHTML = `<section class="panel overview-panel"><h2>Blueprint data could not be loaded</h2><p class="overview-note">${escapeHTML(error.message)}</p></section>`;
       }
     }
 
