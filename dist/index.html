@@ -169,17 +169,9 @@
     .status.connected, .status.selected { background: var(--green-soft); color: var(--green); }
     .status.gap { background: var(--red-soft); color: var(--red); }
 
-    .evidence-stack { min-height: 0; overflow: hidden; display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 12px; }
-    .output-shell-panel { overflow: hidden; }
-    .output-shell-panel .panel-head p { overflow-wrap: anywhere; }
-    .mini-shell { border-top: 1px solid var(--line); overflow: hidden; }
-    .shell-row { display: grid; grid-template-columns: minmax(90px, 1fr) 72px 72px; border-top: 1px solid var(--line); }
-    .shell-row > div { padding: 7px 8px; font-size: 9px; border-left: 1px solid var(--line); }
-    .shell-row > div:first-child { border-left: 0; }
-    .shell-row.head { background: var(--soft); font-weight: 700; color: var(--muted); }
-    .shell-row.highlight { background: #fff8e9; font-weight: 700; color: #805317; }
+    .evidence-stack { min-height: 0; height: 100%; overflow: hidden; }
 
-    .evidence-panel { min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+    .evidence-panel { min-height: 0; height: 100%; overflow: hidden; display: flex; flex-direction: column; }
     .evidence-body { padding: 13px 14px 15px; min-height: 0; overflow-y: auto; }
     .evidence-ref { color: var(--blue-2); font-size: 11px; font-weight: 750; }
     .evidence-body h3 { font-size: 16px; margin: 7px 0 7px; }
@@ -291,12 +283,10 @@
       border-color: #c8444d; background: #fff1f2; color: #7f1720;
       box-shadow: inset 3px 0 0 #c8444d, 0 6px 14px rgba(105,24,32,.08);
     }
-    .selected-card.gap { border-style: dashed; background: #fffafa; }
     .selected-card strong { display: block; font-size: 11px; line-height: 1.25; overflow-wrap: anywhere; }
     .selected-card span { display: block; margin-top: 4px; color: var(--muted); font-size: 9px; line-height: 1.35; overflow-wrap: anywhere; }
     .selected-card .card-status { margin-top: 7px; font-weight: 750; color: var(--green); }
     .selected-card[data-evidence="Source-supported"] .card-status { color: #a96700; }
-    .selected-card.gap .card-status { color: var(--red); }
     .more-card {
       width: 100%; border: 1px dashed #8ebbd3; border-radius: 9px; padding: 7px 8px;
       background: #f4f9fc; color: var(--blue); text-align: center; font-size: 9px; font-weight: 800;
@@ -407,14 +397,6 @@
                 <div class="panel-head"><h2>Source evidence</h2><p>Exact document anchor for the selected node.</p></div>
                 <div id="evidence-body" class="evidence-body"></div>
               </aside>
-              <section id="mock-shell-preview" class="panel output-shell-panel" aria-label="TFL preview">
-                <div class="panel-head"><h2>TFL</h2><p id="shell-title">Table 14.3.1.1.1.1 Overall Summary of Treatment Emergent Adverse Events</p></div>
-                <div class="mini-shell">
-                  <div class="shell-row head"><div>Planned row</div><div>EOquin n (%)</div><div>Placebo n (%)</div></div>
-                  <div class="shell-row"><div>Patients with any treatment emergent AE</div><div>xx (xx.x)</div><div>xx (xx.x)</div></div>
-                  <div id="shell-active-row" class="shell-row highlight"><div>Patients with any serious AE</div><div>xx (xx.x)</div><div>xx (xx.x)</div></div>
-                </div>
-              </section>
             </div>
           </div>
         </section>
@@ -687,7 +669,6 @@
       const focus = focusedGraph();
       const nodes = [];
       let linkedLayers = 0;
-      let firstTflItem = null;
       layers.forEach(layer => {
         const related = focusNodesForStage(layer.key, focus);
         if (!related.length) {
@@ -697,18 +678,13 @@
         linkedLayers += 1;
         const representative = related.find(item => item.nodeId === selectedNodeId) || related[0];
         nodes.push(overviewRegistryNode(representative, focus, related.length));
-        if (layer.key === "Output") firstTflItem = representative;
       });
-      const curated = traces[record.variable];
       return {
         label:`${record.id} — ${record.label}`,
         subtitle:`${record.type} metadata record · variable order ${record.order}`,
         status:`${linkedLayers} of ${layers.length} layers linked`,
         nodes,
-        hasGaps:linkedLayers < layers.length,
-        shellPreview:Boolean(curated && firstTflItem),
-        row:curated?.row || "",
-        tflNode:firstTflItem ? overviewRegistryNode(firstTflItem, focus, 1) : null
+        hasGaps:linkedLayers < layers.length
       };
     }
 
@@ -780,13 +756,6 @@
       const badge = document.getElementById("trace-status");
       badge.textContent = trace.status;
       badge.className = `pill ${trace.hasGaps ? "amber" : "green"}`;
-
-      const shellPreview = document.getElementById("mock-shell-preview");
-      shellPreview.hidden = !trace.shellPreview;
-      if (trace.shellPreview) {
-        document.getElementById("shell-title").textContent = trace.tflNode ? `${trace.tflNode.title} ${trace.tflNode.detail}` : "Mapped TFL";
-        document.getElementById("shell-active-row").firstElementChild.textContent = trace.row;
-      }
 
       const grid = document.getElementById("trace-grid");
       grid.innerHTML = "";
@@ -980,12 +949,7 @@
         const nodes = focusNodesForStage(layer.key, focus);
         const expanded = expandedTopStages.has(layer.key);
         if (expanded) stack.classList.add("expanded");
-        if (!nodes.length) {
-          const gap = document.createElement("div");
-          gap.className = "selected-card gap";
-          gap.innerHTML = `<strong>No connections</strong><span class="card-status">Not evidenced</span>`;
-          stack.appendChild(gap);
-        } else {
+        if (nodes.length) {
           const visibleNodes = expanded ? nodes : nodes.slice(0, TOP_NODE_LIMIT);
           visibleNodes.forEach(item => {
             const card = document.createElement("button");
