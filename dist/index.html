@@ -322,6 +322,59 @@
     .artifact-item.active span { color: #527c97; }
     .lane-empty { padding: 14px 8px; color: var(--muted); text-align: center; font-size: 9px; line-height: 1.45; }
 
+    .source-modal[hidden] { display: none; }
+    .source-modal {
+      position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 24px;
+    }
+    .source-modal-backdrop { position: absolute; inset: 0; background: rgba(9, 31, 48, .62); backdrop-filter: blur(3px); }
+    .source-dialog {
+      position: relative; width: min(760px, 100%); max-height: calc(100dvh - 48px); overflow: hidden;
+      display: flex; flex-direction: column; background: white; border: 1px solid #c8d6e0; border-radius: 20px;
+      box-shadow: 0 28px 80px rgba(6, 31, 49, .3);
+    }
+    .source-dialog-head {
+      padding: 18px 22px 15px; border-bottom: 1px solid var(--line); display: flex; align-items: flex-start;
+      justify-content: space-between; gap: 18px; background: linear-gradient(180deg, #f8fbfd, #fff);
+    }
+    .source-dialog-head h2 { margin: 4px 0 0; font-size: 20px; line-height: 1.25; }
+    .source-dialog-ref { margin: 6px 0 0; color: var(--muted); font-size: 11px; }
+    .source-modal-close {
+      flex: 0 0 auto; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line);
+      background: white; color: var(--ink); font-size: 20px; line-height: 1;
+    }
+    .source-modal-close:hover { background: var(--blue-soft); border-color: #9fc2d6; }
+    .source-dialog-body { padding: 18px 22px 22px; overflow-y: auto; min-height: 0; }
+    .source-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 8px; margin-bottom: 16px; }
+    .source-fact { min-width: 0; padding: 10px 11px; border: 1px solid var(--line); border-radius: 10px; background: var(--soft); }
+    .source-fact span { display: block; color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: .07em; }
+    .source-fact strong { display: block; margin-top: 4px; font-size: 11px; line-height: 1.35; overflow-wrap: anywhere; }
+    .source-content-label { margin: 0 0 8px; color: var(--blue-2); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .09em; }
+    .source-page-text {
+      white-space: pre-wrap; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: #fbfcfd;
+      color: #2b394b; font-family: Georgia, "Times New Roman", serif; font-size: 13px; line-height: 1.62;
+    }
+    .source-page-text mark { background: #ffebb1; border-radius: 3px; }
+    .source-unavailable { color: var(--muted); font-family: inherit; }
+    .source-page-image-wrap {
+      width: 100%; overflow: hidden; border: 1px solid var(--line); border-radius: 12px;
+      background: #eef3f6; box-shadow: 0 1px 2px rgba(14, 42, 66, .06);
+    }
+    .source-page-image { display: block; width: 100%; height: auto; background: white; }
+    .source-page-image-fallback { padding: 16px; }
+    .source-section-copy { margin: 0 0 12px; color: #35465a; font-family: Georgia, "Times New Roman", serif; font-size: 13px; line-height: 1.6; }
+    .source-table-title { margin: 0 0 10px; font-size: 14px; line-height: 1.35; }
+    .source-table-scroll { width: 100%; overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: white; }
+    .source-table { width: 100%; min-width: 620px; border-collapse: collapse; table-layout: fixed; font-size: 11px; }
+    .source-table.compact { min-width: 0; }
+    .source-table th, .source-table td { padding: 9px 10px; border-right: 1px solid #d7e0e7; border-bottom: 1px solid #d7e0e7; text-align: left; vertical-align: top; line-height: 1.45; }
+    .source-table th:last-child, .source-table td:last-child { border-right: 0; }
+    .source-table tbody tr:last-child td { border-bottom: 0; }
+    .source-table thead th { background: #174e77; color: white; font-weight: 750; text-align: center; }
+    .source-table thead th:first-child { text-align: left; }
+    .source-table tbody td:not(:first-child) { text-align: center; }
+    .source-table .table-group td { background: var(--blue-soft); color: var(--blue); font-weight: 800; text-align: left; }
+    .source-table .table-row-label { font-weight: 700; color: var(--ink); }
+
     @media (max-width: 1100px) {
       .blueprint-page { grid-template-rows: auto auto minmax(0, 1fr); }
       .overview-grid { grid-template-columns: 1fr 300px; }
@@ -331,6 +384,9 @@
       .sidebar { padding: 16px 11px; }
       .topbar-study select { min-width: 140px; }
       .overview-grid { grid-template-columns: minmax(0, 1fr) 280px; }
+      .source-modal { padding: 12px; }
+      .source-dialog { max-height: calc(100dvh - 24px); border-radius: 16px; }
+      .source-facts { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -427,6 +483,21 @@
     </main>
   </div>
 
+  <div id="source-modal" class="source-modal" hidden aria-hidden="true">
+    <div class="source-modal-backdrop" data-source-modal-close></div>
+    <section class="source-dialog" role="dialog" aria-modal="true" aria-labelledby="source-modal-title">
+      <header class="source-dialog-head">
+        <div>
+          <div id="source-modal-layer" class="eyebrow">Source document</div>
+          <h2 id="source-modal-title">Source details</h2>
+          <p id="source-modal-ref" class="source-dialog-ref"></p>
+        </div>
+        <button id="source-modal-close" class="source-modal-close" type="button" aria-label="Close source details">&times;</button>
+      </header>
+      <div id="source-modal-body" class="source-dialog-body"></div>
+    </section>
+  </div>
+
   <script>
     const traces = {
       AESER: {
@@ -519,6 +590,7 @@
     let metadataRecords = [];
     let sourceCatalogs = {protocol:{items:[]}, crf:{items:[]}, sdtm:{items:[]}, sap:{items:[]}, tfl:{items:[]}};
     let connectionRegistry = {nodes:[], connections:[]};
+    let sourceDetails = {documents:{}};
     let recordsById = new Map();
     let catalogs = new Map();
     let graphNodes = new Map();
@@ -530,6 +602,64 @@
     let overviewSelectedNode = 0;
     const TOP_NODE_LIMIT = 3;
     const expandedTopStages = new Set();
+    const sourceModalStages = new Set(["Protocol", "CRF", "SAP"]);
+    let modalNodeId = null;
+    const structuredSourceTables = {
+      "SAP:3.1": {
+        lead:["Data will be summarized by visit. Non-overlapping intervals are defined so scheduled and actual visit timing can be analyzed consistently."],
+        title:"Table 1. List of Scheduled Visits and Visit Windows",
+        headers:["Scheduled visit", "Visit window for analysis"],
+        compact:true,
+        rows:[
+          ["Day 1", "Day of TUR and EOquin Instillation (Baseline)"],
+          ["Week 3", "Day 2 to Day 55"],
+          ["Month 3", "Day 56 to Day 135"],
+          ["Month 6", "Day 136 to Day 225"],
+          ["Month 9", "Day 226 to Day 315"],
+          ["Month 12", "Day 316 to Day 405"],
+          ["Month 15", "Day 406 to Day 495"],
+          ["Month 18", "Day 496 to Day 585"],
+          ["Month 21", "Day 586 to Day 675"],
+          ["Month 24", "Day 676 to Day 765"]
+        ]
+      },
+      "SAP:5.5.3": {
+        lead:[
+          "The following groups of analyses of primary as well as key secondary efficacy endpoints will be performed in the study.",
+          "1. Intent-to-Treat (ITT) Population\n2. Ta G1-G2 Population\n3. ITT Population — Time from TUR to Instillation: ≤30 minutes; 31–90 minutes; >90 minutes\n4. Ta G1-G2 Population — Time from TUR to Instillation: ≤30 minutes; 31–90 minutes; >90 minutes"
+        ],
+        title:"Table 2. List of Efficacy Analyses by Population and Subgroups",
+        headers:["Endpoints", "ITT", "Ta G1–G2", "Per Protocol", "Ta G3", "Tis, T1 or T2"],
+        rows:[
+          {section:"Primary Endpoint"},
+          ["Recurrence Rate", "Overall\n≤30min; 31–90min\n>90min", "Overall\n≤30min; 31–90min\n>90min", "Overall Only", "Overall Only", "Overall Only"],
+          {section:"Secondary Endpoints"},
+          ["Time to Recurrence", "Overall\n≤30min; 31–90min\n>90min", "Overall\n≤30min; 31–90min\n>90min", "Overall Only", "Overall Only", "Overall Only"],
+          ["Progression Rate", "Overall\n31–90min", "Overall\n31–90min", "Overall Only", "Overall Only", "Overall Only"],
+          ["Time to Progression", "Overall\n31–90min", "Overall\n31–90min", "Overall Only", "Overall Only", "Overall Only"],
+          ["Number of Recurrences", "Overall\n31–90min", "Overall\n31–90min", "Overall Only", "Overall Only", "Overall Only"],
+          ["Overall Survival", "Overall\n31–90min", "Overall\n31–90min", "Overall Only", "Overall Only", "Overall Only"],
+          ["Disease Free Survival", "Overall\n31–90min", "Overall\n31–90min", "Overall Only", "Overall Only", "Overall Only"]
+        ]
+      },
+      "SAP:5.5.4": {
+        lead:["Table 3 provides a list of all analyses of safety to be performed in this study."],
+        title:"Table 3. List of Safety Analyses by Population and Subgroups",
+        headers:["Safety endpoint", "Population / subgroup"],
+        compact:true,
+        rows:[
+          ["Study Duration and Drug Exposure", "Overall\n≤30min\n31–90min\n>90min"],
+          ["Concomitant Medications", "Overall Only"],
+          ["Overall Summary of AEs", "Overall\n≤30min\n31–90min\n>90min"],
+          ["Summary of AEs by SOC and PT", "Overall\n≤30min\n31–90min\n>90min"],
+          ["Summary of Related AEs", "Overall\n31–90min"],
+          ["Summary of AEs by Severity", "Overall\n31–90min"],
+          ["Summary SAEs", "Overall\n31–90min"],
+          ["Summary of Laboratory Tests, Vital Signs, Physical Exam, and Other Safety Measures", "Overall\n31–90min"],
+          ["Functional Bladder Capacity", "Overall\n31–90min"]
+        ]
+      }
+    };
 
     function escapeHTML(value) {
       return String(value ?? "").replace(/[&<>'"]/g, character => ({
@@ -936,6 +1066,86 @@
       return item.title;
     }
 
+    function sourceFactsForNode(node) {
+      if (node.stage === "CRF") return [
+        ["Form", node.form || "—"],
+        ["Field", node.label || "—"],
+        ["Page", node.page ? `Page ${node.page}` : "—"],
+        ["SDTM annotation", [node.domain, node.annotation].filter(Boolean).join(" · ") || "—"]
+      ];
+      return [
+        ["Section", node.section || "—"],
+        ["Page", node.page ? `Page ${node.page}` : "—"],
+        ["Source", node.source_file || "—"]
+      ];
+    }
+
+    function closeSourceModal() {
+      const modal = document.getElementById("source-modal");
+      modal.hidden = true;
+      modal.setAttribute("aria-hidden", "true");
+      const focusTarget = modalNodeId && document.querySelector(`#selected-lanes .selected-card[data-node-id="${CSS.escape(modalNodeId)}"]`);
+      modalNodeId = null;
+      focusTarget?.focus();
+    }
+
+    function renderStructuredSourceTable(table) {
+      const lead = (table.lead || []).map(paragraph => `<p class="source-section-copy">${escapeHTML(paragraph).replace(/\n/g, "<br>")}</p>`).join("");
+      const header = (table.headers || []).map(value => `<th scope="col">${escapeHTML(value)}</th>`).join("");
+      const body = (table.rows || []).map(row => {
+        if (row?.section) return `<tr class="table-group"><td colspan="${table.headers.length}">${escapeHTML(row.section)}</td></tr>`;
+        return `<tr>${row.map((value, index) => `<td class="${index === 0 ? "table-row-label" : ""}">${escapeHTML(value).replace(/\n/g, "<br>")}</td>`).join("")}</tr>`;
+      }).join("");
+      return `${lead}<h3 class="source-table-title">${escapeHTML(table.title)}</h3><div class="source-table-scroll"><table class="source-table${table.compact ? " compact" : ""}"><thead><tr>${header}</tr></thead><tbody>${body}</tbody></table></div>`;
+    }
+
+    function renderCRFSourcePage(node, pageRecord, phrase) {
+      if (!node.page) return `<div class="source-page-text source-unavailable">Original CRF page is not available for this node.</div>`;
+      const pageNumber = String(node.page).padStart(3, "0");
+      const fallback = pageRecord?.content
+        ? highlight(pageRecord.content, phrase)
+        : "Original CRF page is not available for this node.";
+      return `<div class="source-page-image-wrap"><img class="source-page-image" src="source_pages/crf/page-${pageNumber}.jpg" alt="Original annotated CRF page ${escapeHTML(node.page)}" data-fallback="${escapeHTML(fallback)}"></div>`;
+    }
+
+    function openSourceModal(item) {
+      const node = item?.sourceNode;
+      if (!node || !sourceModalStages.has(node.stage)) return;
+      const documentRecord = sourceDetails.documents?.[node.source_file];
+      const pageRecord = documentRecord?.pages?.[String(node.page)];
+      const structuredTable = structuredSourceTables[item.nodeId];
+      const phrase = node.stage === "CRF" ? (node.label || node.annotation) : node.label;
+      const facts = sourceFactsForNode(node);
+      const isCRFPage = node.stage === "CRF";
+      const contentLabel = isCRFPage ? "Original annotated CRF page" : (structuredTable ? "Structured source content" : "Source page content");
+      const sourceContent = isCRFPage
+        ? renderCRFSourcePage(node, pageRecord, phrase)
+        : (structuredTable
+          ? renderStructuredSourceTable(structuredTable)
+          : `<div class="source-page-text${pageRecord?.content ? "" : " source-unavailable"}">${pageRecord?.content ? highlight(pageRecord.content, phrase) : "Source page text is not available for this node."}</div>`);
+      document.getElementById("source-modal-layer").textContent = `${node.stage} source`;
+      document.getElementById("source-modal-title").textContent = registryNodeTitle(node);
+      document.getElementById("source-modal-ref").textContent = `${node.source_file || "Source document"}${node.anchor ? ` · ${node.anchor}` : ""}`;
+      document.getElementById("source-modal-body").innerHTML = `
+        <div class="source-facts">
+          ${facts.map(([label, value]) => `<div class="source-fact"><span>${escapeHTML(label)}</span><strong>${escapeHTML(value)}</strong></div>`).join("")}
+        </div>
+        <p class="source-content-label">${contentLabel}</p>
+        ${sourceContent}`;
+      const pageImage = document.querySelector("#source-modal-body .source-page-image");
+      pageImage?.addEventListener("error", () => {
+        const fallback = document.createElement("div");
+        fallback.className = "source-page-text source-page-image-fallback";
+        fallback.innerHTML = pageImage.dataset.fallback || "Original CRF page is not available for this node.";
+        pageImage.closest(".source-page-image-wrap")?.replaceWith(fallback);
+      }, {once:true});
+      modalNodeId = item.nodeId;
+      const modal = document.getElementById("source-modal");
+      modal.hidden = false;
+      modal.setAttribute("aria-hidden", "false");
+      document.getElementById("source-modal-close").focus();
+    }
+
     function renderSelectedBlueprint() {
       const lanes = document.getElementById("selected-lanes");
       const focus = focusedGraph();
@@ -959,7 +1169,10 @@
             const relationClass = focus.pathClass.get(item.nodeId) || "Connected";
             card.dataset.evidence = relationClass;
             card.innerHTML = `<strong>${escapeHTML(compactNodeTitle(item))}</strong>${item.nodeId === selectedNodeId ? '<span class="card-status">Selected</span>' : ""}`;
-            card.addEventListener("click", () => selectArtifact(item));
+            card.addEventListener("click", () => {
+              selectArtifact(item);
+              if (sourceModalStages.has(item.stage)) openSourceModal(item);
+            });
             stack.appendChild(card);
           });
           if (nodes.length > TOP_NODE_LIMIT) {
@@ -1135,14 +1348,17 @@
 
     async function loadMetadata() {
       try {
-        const [response, registryResponse] = await Promise.all([
+        const [response, registryResponse, sourceResponse] = await Promise.all([
           fetch("metadata.json", {cache:"no-cache"}),
-          fetch("connection_registry.json", {cache:"no-cache"})
+          fetch("connection_registry.json", {cache:"no-cache"}),
+          fetch("source_details.json", {cache:"no-cache"})
         ]);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         if (!registryResponse.ok) throw new Error(`Connection registry HTTP ${registryResponse.status}`);
+        if (!sourceResponse.ok) throw new Error(`Source details HTTP ${sourceResponse.status}`);
         const payload = await response.json();
         connectionRegistry = await registryResponse.json();
+        sourceDetails = await sourceResponse.json();
         if (!Array.isArray(payload.records)) throw new Error("Metadata records are missing");
         if (!Array.isArray(connectionRegistry.nodes) || !Array.isArray(connectionRegistry.connections)) throw new Error("Connection registry is missing");
         metadataRecords = payload.records;
@@ -1175,6 +1391,11 @@
     document.getElementById("variable-search").addEventListener("input", renderOverviewVariables);
     document.getElementById("dataset-filter").addEventListener("change", renderOverviewVariables);
     document.getElementById("artifact-search").addEventListener("input", renderCatalogs);
+    document.getElementById("source-modal-close").addEventListener("click", closeSourceModal);
+    document.querySelector("[data-source-modal-close]").addEventListener("click", closeSourceModal);
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape" && !document.getElementById("source-modal").hidden) closeSourceModal();
+    });
     window.addEventListener("resize", () => requestAnimationFrame(() => {
       drawConnectors();
       drawCatalogConnectors();
