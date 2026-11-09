@@ -260,16 +260,27 @@
       background: white; color: var(--ink); outline: none;
     }
     .blueprint-toolbar input:focus { border-color: #6da6c8; box-shadow: 0 0 0 3px #e4f0f7; }
+    .mapping-action-btn {
+      flex: 0 0 auto; border: 1px solid #1d6591; border-radius: 10px; padding: 9px 13px;
+      background: white; color: var(--blue); font-size: 11px; font-weight: 800; white-space: nowrap;
+    }
+    .mapping-action-btn:hover { background: var(--blue-soft); }
+    .mapping-action-btn.save-mode { border-color: #17765e; background: #17765e; color: white; }
+    .mapping-action-btn.save-mode:hover { background: #105f4b; }
+    .mapping-edit-status { min-width: 118px; color: var(--blue); font-size: 10px; font-weight: 750; text-align: right; }
 
     .selected-blueprint { min-height: 0; overflow: hidden; }
     .selected-scroll { min-height: 0; overflow-x: auto; overflow-y: hidden; }
     .selected-canvas { min-width: 820px; position: relative; padding: 14px 12px 12px; }
     .selected-lanes { display: grid; grid-template-columns: repeat(7, minmax(104px, 1fr)); gap: 8px; align-items: stretch; position: relative; z-index: 2; }
     #connector-layer { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; overflow: visible; }
+    .mapping-editing #connector-layer { z-index: 4; }
     .connector { fill: none; stroke: #5f93b4; stroke-width: 2; opacity: .85; }
     .connector-dot { fill: #5f93b4; }
     .connector.source-supported, .catalog-connector.source-supported { stroke-dasharray: none; opacity: .85; }
     .connector-dot.source-supported, .catalog-connector-dot.source-supported { opacity: 1; }
+    .connector.draft, .catalog-connector.draft { stroke: #16866b; stroke-dasharray: 6 4; opacity: 1; }
+    .connector-dot.draft, .catalog-connector-dot.draft { fill: #16866b; }
     .selected-lane { min-width: 0; display: grid; grid-template-rows: auto auto; align-content: start; gap: 6px; }
     .lane-label { color: var(--blue-2); font-size: 9px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
     .selected-node-stack { min-width: 0; display: grid; align-content: start; gap: 6px; }
@@ -282,6 +293,23 @@
     .selected-card.selected {
       border-color: #c8444d; background: #fff1f2; color: #7f1720;
       box-shadow: inset 3px 0 0 #c8444d, 0 6px 14px rgba(105,24,32,.08);
+    }
+    .selected-card.draft-link { border-color: #16866b; background: #effaf6; }
+    .mapping-remove {
+      position: absolute; top: 5px; right: 6px; width: 18px; height: 18px; border-radius: 50%;
+      display: grid !important; place-items: center; margin: 0 !important; background: #fff0f1;
+      color: #b52f39 !important; font: 800 13px/1 Arial, sans-serif !important;
+    }
+    .mapping-remove:hover { background: #ffdadd; }
+    .mapping-editing .selected-card.direct-link { padding-right: 28px; }
+    .mapping-editing .selected-lane.mapping-drop-zone {
+      border: 1px dashed #8ebbd3; border-radius: 12px; padding: 5px; margin: -5px;
+      background: rgba(242, 249, 252, .72); transition: border-color .15s ease, background .15s ease;
+    }
+    .mapping-editing .selected-lane.mapping-drop-zone.drag-over { border-color: #16866b; background: #e9f8f2; }
+    .mapping-drop-hint {
+      border: 1px dashed #75aecd; border-radius: 9px; padding: 7px 5px; color: var(--blue);
+      background: #f7fbfd; font-size: 8px; font-weight: 800; text-align: center;
     }
     .selected-card strong { display: block; font-size: 11px; line-height: 1.25; overflow-wrap: anywhere; }
     .selected-card span { display: block; margin-top: 4px; color: var(--muted); font-size: 9px; line-height: 1.35; overflow-wrap: anywhere; }
@@ -310,6 +338,9 @@
       width: 100%; border: 1px solid transparent; border-radius: 8px; padding: 8px; background: transparent;
       color: var(--ink); text-align: left; min-width: 0;
     }
+    .mapping-editing .artifact-item[draggable="true"] { cursor: grab; border-color: #d2e3ed; background: #fbfdfe; }
+    .mapping-editing .artifact-item[draggable="true"]:hover { border-color: #5e9fbe; background: #edf7fb; }
+    .mapping-editing .artifact-item.dragging { opacity: .45; cursor: grabbing; }
     .artifact-item:hover { background: var(--soft); }
     .artifact-item.active { background: var(--blue-soft); border-color: #b9d6e6; color: var(--blue); }
     .artifact-item.connected-node { background: var(--blue-soft); border-color: #8ebbd3; color: var(--blue); box-shadow: inset 3px 0 0 #4d8fb7; }
@@ -460,7 +491,11 @@
         <section id="page-blueprint" class="page-view blueprint-page" data-view="blueprint" hidden>
           <div class="page-heading">
             <h1>Blueprint</h1>
-            <div class="blueprint-toolbar"><input id="artifact-search" type="search" placeholder="Search all artifacts…" aria-label="Search blueprint artifacts"></div>
+            <div class="blueprint-toolbar">
+              <span id="mapping-edit-status" class="mapping-edit-status" aria-live="polite"></span>
+              <input id="artifact-search" type="search" placeholder="Search all artifacts…" aria-label="Search blueprint artifacts">
+              <button id="mapping-edit-button" class="mapping-action-btn" type="button">Edit mappings</button>
+            </div>
           </div>
 
           <section class="panel selected-blueprint" aria-label="Trace path">
@@ -604,6 +639,13 @@
     const expandedTopStages = new Set();
     const sourceModalStages = new Set(["Protocol", "CRF", "SAP"]);
     let modalNodeId = null;
+    const MAPPING_STORAGE_KEY = "clinical-blueprint-mapping-overrides-v1";
+    let mappingEditMode = false;
+    let mappingOverrides = {added:[], removedPairs:[]};
+    let originalConnectionPairs = new Set();
+    let sessionAddedPairs = new Set();
+    let sessionRemovedPairs = new Set();
+    let draggedMappingNodeId = null;
     const structuredSourceTables = {
       "SAP:3.1": {
         lead:["Data will be summarized by visit. Non-overlapping intervals are defined so scheduled and actual visit timing can be analyzed consistently."],
@@ -674,6 +716,164 @@
       const index = source.toLowerCase().indexOf(target.toLowerCase());
       if (index < 0) return escapeHTML(source);
       return escapeHTML(source.slice(0, index)) + "<mark>" + escapeHTML(source.slice(index, index + target.length)) + "</mark>" + escapeHTML(source.slice(index + target.length));
+    }
+
+    function connectionPairKey(firstNodeId, secondNodeId) {
+      return [firstNodeId, secondNodeId].sort().join("|");
+    }
+
+    function connectionHasPair(connection, pairKey) {
+      return connectionPairKey(connection.from_node_id, connection.to_node_id) === pairKey;
+    }
+
+    function directConnectionPair(firstNodeId, secondNodeId) {
+      const key = connectionPairKey(firstNodeId, secondNodeId);
+      return connectionRegistry.connections.some(connection => connectionHasPair(connection, key));
+    }
+
+    function draftConnectionPair(firstNodeId, secondNodeId) {
+      const key = connectionPairKey(firstNodeId, secondNodeId);
+      return connectionRegistry.connections.some(connection => connectionHasPair(connection, key) && connection.edit_status === "added");
+    }
+
+    function setMappingStatus(message) {
+      document.getElementById("mapping-edit-status").textContent = message || "";
+    }
+
+    function pendingMappingChangeCount() {
+      return sessionAddedPairs.size + sessionRemovedPairs.size;
+    }
+
+    function updatePendingMappingStatus() {
+      const count = pendingMappingChangeCount();
+      setMappingStatus(count ? `${count} unsaved change${count === 1 ? "" : "s"}` : "Drag results into the map");
+    }
+
+    function loadMappingOverrides() {
+      try {
+        const stored = JSON.parse(localStorage.getItem(MAPPING_STORAGE_KEY) || "{}");
+        return {
+          added:Array.isArray(stored.added) ? stored.added : [],
+          removedPairs:Array.isArray(stored.removedPairs) ? stored.removedPairs : []
+        };
+      } catch (error) {
+        return {added:[], removedPairs:[]};
+      }
+    }
+
+    function applySavedMappingOverrides() {
+      mappingOverrides = loadMappingOverrides();
+      const validNodes = new Set(connectionRegistry.nodes.map(node => node.node_id));
+      const removed = new Set(mappingOverrides.removedPairs);
+      connectionRegistry.connections = connectionRegistry.connections.filter(connection => !removed.has(connectionPairKey(connection.from_node_id, connection.to_node_id)));
+      const existing = new Set(connectionRegistry.connections.map(connection => connectionPairKey(connection.from_node_id, connection.to_node_id)));
+      mappingOverrides.added = mappingOverrides.added.filter(connection => validNodes.has(connection.from_node_id) && validNodes.has(connection.to_node_id));
+      mappingOverrides.added.forEach(connection => {
+        const key = connectionPairKey(connection.from_node_id, connection.to_node_id);
+        if (!existing.has(key)) {
+          connectionRegistry.connections.push({...connection, edit_status:"human"});
+          existing.add(key);
+        }
+      });
+    }
+
+    function updateMappingEditUI() {
+      const page = document.getElementById("page-blueprint");
+      const button = document.getElementById("mapping-edit-button");
+      page.classList.toggle("mapping-editing", mappingEditMode);
+      button.classList.toggle("save-mode", mappingEditMode);
+      button.textContent = mappingEditMode ? "Save changes" : "Edit mappings";
+      document.getElementById("artifact-search").placeholder = mappingEditMode ? "Search artifacts to add…" : "Search all artifacts…";
+      if (mappingEditMode) updatePendingMappingStatus();
+    }
+
+    function beginMappingEdit() {
+      mappingEditMode = true;
+      sessionAddedPairs = new Set();
+      sessionRemovedPairs = new Set();
+      updateMappingEditUI();
+      renderBlueprint();
+    }
+
+    function saveMappingChanges() {
+      const count = pendingMappingChangeCount();
+      connectionRegistry.connections.forEach(connection => {
+        if (connection.edit_status === "added") connection.edit_status = "human";
+      });
+      mappingOverrides.added = mappingOverrides.added.map(connection => ({...connection, edit_status:"human"}));
+      localStorage.setItem(MAPPING_STORAGE_KEY, JSON.stringify({...mappingOverrides, savedAt:new Date().toISOString()}));
+      mappingEditMode = false;
+      updateMappingEditUI();
+      buildCatalogs();
+      renderBlueprint();
+      setMappingStatus(count ? `${count} change${count === 1 ? "" : "s"} saved locally` : "No changes to save");
+    }
+
+    function addMappingConnection(targetNodeId, targetStage) {
+      const anchor = graphNodes.get(selectedNodeId);
+      const target = graphNodes.get(targetNodeId);
+      if (!mappingEditMode || !anchor || !target) return;
+      if (target.stage !== targetStage) {
+        setMappingStatus(`Drop into the ${target.stage === "Output" ? "TFL" : target.stage} column`);
+        return;
+      }
+      if (anchor.nodeId === target.nodeId) {
+        setMappingStatus("Choose a different artifact");
+        return;
+      }
+      if (anchor.stage === target.stage) {
+        setMappingStatus("Choose an artifact from another column");
+        return;
+      }
+      const key = connectionPairKey(anchor.nodeId, target.nodeId);
+      if (directConnectionPair(anchor.nodeId, target.nodeId)) {
+        setMappingStatus("This relationship already exists");
+        return;
+      }
+      const first = anchor.layerIndex <= target.layerIndex ? anchor : target;
+      const second = first === anchor ? target : anchor;
+      const connection = {
+        connection_id:`HUMAN-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        from_node_id:first.nodeId,
+        from_stage:first.sourceNode.stage,
+        from_artifact:first.sourceNode.artifact_id,
+        from_label:first.sourceNode.label,
+        to_node_id:second.nodeId,
+        to_stage:second.sourceNode.stage,
+        to_artifact:second.sourceNode.artifact_id,
+        to_label:second.sourceNode.label,
+        evidence_class:"Source-supported",
+        rule_id:"HUMAN-MAPPING",
+        evidence_basis:"Human-curated mapping added in the Blueprint editor.",
+        source_a:first.sourceNode.source_file || "Blueprint editor",
+        anchor_a:first.sourceNode.anchor || first.title,
+        source_b:second.sourceNode.source_file || "Blueprint editor",
+        anchor_b:second.sourceNode.anchor || second.title,
+        edit_status:"added"
+      };
+      connectionRegistry.connections.push(connection);
+      mappingOverrides.added = mappingOverrides.added.filter(candidate => !connectionHasPair(candidate, key));
+      mappingOverrides.added.push(connection);
+      mappingOverrides.removedPairs = mappingOverrides.removedPairs.filter(pair => pair !== key);
+      sessionRemovedPairs.delete(key);
+      sessionAddedPairs.add(key);
+      buildCatalogs();
+      renderBlueprint();
+      updatePendingMappingStatus();
+    }
+
+    function removeMappingConnection(targetNodeId) {
+      if (!mappingEditMode || !selectedNodeId || targetNodeId === selectedNodeId) return;
+      const key = connectionPairKey(selectedNodeId, targetNodeId);
+      if (!directConnectionPair(selectedNodeId, targetNodeId)) return;
+      connectionRegistry.connections = connectionRegistry.connections.filter(connection => !connectionHasPair(connection, key));
+      mappingOverrides.added = mappingOverrides.added.filter(connection => !connectionHasPair(connection, key));
+      if (originalConnectionPairs.has(key)) mappingOverrides.removedPairs = [...new Set([...mappingOverrides.removedPairs, key])];
+      sessionAddedPairs.delete(key);
+      sessionRemovedPairs.add(key);
+      buildCatalogs();
+      renderBlueprint();
+      updatePendingMappingStatus();
     }
 
     function statusLabel(status) {
@@ -965,6 +1165,7 @@
             from:left.nodeId,
             to:right.nodeId,
             evidenceClass:connection.evidence_class,
+            draft:connection.edit_status === "added",
             connectionIds:[connection.connection_id],
             ruleIds:[connection.rule_id]
           };
@@ -972,6 +1173,7 @@
           graphEdges.push(edge);
         } else {
           if (connection.evidence_class === "Verified") edge.evidenceClass = "Verified";
+          if (connection.edit_status === "added") edge.draft = true;
           if (!edge.connectionIds.includes(connection.connection_id)) edge.connectionIds.push(connection.connection_id);
           if (!edge.ruleIds.includes(connection.rule_id)) edge.ruleIds.push(connection.rule_id);
         }
@@ -1149,10 +1351,12 @@
     function renderSelectedBlueprint() {
       const lanes = document.getElementById("selected-lanes");
       const focus = focusedGraph();
+      const anchorStage = graphNodes.get(selectedNodeId)?.stage;
       lanes.innerHTML = "";
       layers.forEach(layer => {
         const lane = document.createElement("div");
         lane.className = "selected-lane";
+        lane.dataset.stage = layer.key;
         lane.innerHTML = `<div class="lane-label">${escapeHTML(layer.label)}</div>`;
         const stack = document.createElement("div");
         stack.className = "selected-node-stack";
@@ -1164,14 +1368,28 @@
           visibleNodes.forEach(item => {
             const card = document.createElement("button");
             card.type = "button";
-            card.className = `selected-card ${item.nodeId === selectedNodeId ? "selected" : "connected"}`;
+            const direct = item.nodeId !== selectedNodeId && directConnectionPair(selectedNodeId, item.nodeId);
+            const draft = direct && draftConnectionPair(selectedNodeId, item.nodeId);
+            card.className = `selected-card ${item.nodeId === selectedNodeId ? "selected" : "connected"}${direct ? " direct-link" : ""}${draft ? " draft-link" : ""}`;
             card.dataset.nodeId = item.nodeId;
             const relationClass = focus.pathClass.get(item.nodeId) || "Connected";
             card.dataset.evidence = relationClass;
             card.innerHTML = `<strong>${escapeHTML(compactNodeTitle(item))}</strong>${item.nodeId === selectedNodeId ? '<span class="card-status">Selected</span>' : ""}`;
+            if (mappingEditMode && direct) {
+              const remove = document.createElement("span");
+              remove.className = "mapping-remove";
+              remove.textContent = "×";
+              remove.title = "Remove this relationship";
+              remove.setAttribute("aria-label", "Remove this relationship");
+              remove.addEventListener("click", event => {
+                event.stopPropagation();
+                removeMappingConnection(item.nodeId);
+              });
+              card.appendChild(remove);
+            }
             card.addEventListener("click", () => {
               selectArtifact(item);
-              if (sourceModalStages.has(item.stage)) openSourceModal(item);
+              if (!mappingEditMode && sourceModalStages.has(item.stage)) openSourceModal(item);
             });
             stack.appendChild(card);
           });
@@ -1188,6 +1406,29 @@
             stack.appendChild(more);
           }
         }
+        if (mappingEditMode && layer.key !== anchorStage) {
+          lane.classList.add("mapping-drop-zone");
+          const hint = document.createElement("div");
+          hint.className = "mapping-drop-hint";
+          hint.textContent = `Drop ${layer.label} here`;
+          stack.appendChild(hint);
+          lane.addEventListener("dragover", event => {
+            const draggedItem = graphNodes.get(draggedMappingNodeId);
+            if (!draggedItem || draggedItem.stage !== layer.key) return;
+            event.preventDefault();
+            event.dataTransfer.dropEffect = "link";
+            lane.classList.add("drag-over");
+          });
+          lane.addEventListener("dragleave", event => {
+            if (!lane.contains(event.relatedTarget)) lane.classList.remove("drag-over");
+          });
+          lane.addEventListener("drop", event => {
+            event.preventDefault();
+            lane.classList.remove("drag-over");
+            const nodeId = event.dataTransfer.getData("text/plain") || draggedMappingNodeId;
+            addMappingConnection(nodeId, layer.key);
+          });
+        }
         stack.addEventListener("scroll", () => requestAnimationFrame(drawConnectors), {passive:true});
         lane.appendChild(stack);
         lanes.appendChild(lane);
@@ -1198,7 +1439,7 @@
       });
     }
 
-    function drawEdge(svg, cssClass, canvasRect, leftElement, rightElement, evidenceClass) {
+    function drawEdge(svg, cssClass, canvasRect, leftElement, rightElement, evidenceClass, draft = false) {
       const a = leftElement.getBoundingClientRect();
       const b = rightElement.getBoundingClientRect();
       const leftFirst = a.left <= b.left;
@@ -1210,12 +1451,13 @@
       const direction = x2 >= x1 ? 1 : -1;
       const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
       const evidenceCss = evidenceClass === "Source-supported" ? " source-supported" : "";
-      path.setAttribute("class", `${cssClass}${evidenceCss}`);
+      const draftCss = draft ? " draft" : "";
+      path.setAttribute("class", `${cssClass}${evidenceCss}${draftCss}`);
       path.setAttribute("d", `M ${x1} ${y1} C ${x1 + bend * direction} ${y1}, ${x2 - bend * direction} ${y2}, ${x2} ${y2}`);
       svg.appendChild(path);
       [[x1, y1], [x2, y2]].forEach(([cx, cy]) => {
         const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        dot.setAttribute("class", `${cssClass}-dot${evidenceCss}`);
+        dot.setAttribute("class", `${cssClass}-dot${evidenceCss}${draftCss}`);
         dot.setAttribute("cx", cx); dot.setAttribute("cy", cy); dot.setAttribute("r", 3);
         svg.appendChild(dot);
       });
@@ -1232,7 +1474,7 @@
       svg.innerHTML = "";
       graphEdges.filter(edge => focus.nodeIds.has(edge.from) && focus.nodeIds.has(edge.to)).forEach(edge => {
         const from = elements.get(edge.from); const to = elements.get(edge.to);
-        if (from && to && isVisibleInSelectedStack(from) && isVisibleInSelectedStack(to)) drawEdge(svg, "connector", canvasRect, from, to, edge.evidenceClass);
+        if (from && to && isVisibleInSelectedStack(from) && isVisibleInSelectedStack(to)) drawEdge(svg, "connector", canvasRect, from, to, edge.evidenceClass, edge.draft);
       });
     }
 
@@ -1286,6 +1528,23 @@
             button.dataset.nodeId = item.nodeId;
             button.innerHTML = `<strong>${escapeHTML(item.title)}</strong>`;
             button.addEventListener("click", () => selectArtifact(item));
+            if (mappingEditMode && !selected) {
+              button.draggable = true;
+              button.title = `Drag ${item.title} into the ${layer.label} column above`;
+              button.addEventListener("dragstart", event => {
+                draggedMappingNodeId = item.nodeId;
+                button.classList.add("dragging");
+                event.dataTransfer.effectAllowed = "link";
+                event.dataTransfer.setData("text/plain", item.nodeId);
+                setMappingStatus(`Drag into the ${layer.label} column above`);
+              });
+              button.addEventListener("dragend", () => {
+                draggedMappingNodeId = null;
+                button.classList.remove("dragging");
+                document.querySelectorAll(".selected-lane.drag-over").forEach(element => element.classList.remove("drag-over"));
+                updatePendingMappingStatus();
+              });
+            }
             fragment.appendChild(button);
           });
           list.appendChild(fragment);
@@ -1323,7 +1582,7 @@
       svg.innerHTML = "";
       graphEdges.filter(edge => focus.nodeIds.has(edge.from) && focus.nodeIds.has(edge.to)).forEach(edge => {
         const from = elements.get(edge.from); const to = elements.get(edge.to);
-        if (from && to && isVisibleInCatalog(from) && isVisibleInCatalog(to)) drawEdge(svg, "catalog-connector", canvasRect, from, to, edge.evidenceClass);
+        if (from && to && isVisibleInCatalog(from) && isVisibleInCatalog(to)) drawEdge(svg, "catalog-connector", canvasRect, from, to, edge.evidenceClass, edge.draft);
       });
     }
 
@@ -1361,6 +1620,8 @@
         sourceDetails = await sourceResponse.json();
         if (!Array.isArray(payload.records)) throw new Error("Metadata records are missing");
         if (!Array.isArray(connectionRegistry.nodes) || !Array.isArray(connectionRegistry.connections)) throw new Error("Connection registry is missing");
+        originalConnectionPairs = new Set(connectionRegistry.connections.map(connection => connectionPairKey(connection.from_node_id, connection.to_node_id)));
+        applySavedMappingOverrides();
         metadataRecords = payload.records;
         recordsById = new Map(metadataRecords.map(record => [record.id, record]));
         document.getElementById("metadata-record-count").textContent = payload.recordCount.toLocaleString();
@@ -1374,6 +1635,7 @@
         });
         if (!recordsById.has(selectedRecordId)) selectedRecordId = metadataRecords[0].id;
         buildCatalogs();
+        updateMappingEditUI();
         renderOverview();
         renderBlueprint();
       } catch (error) {
@@ -1391,6 +1653,9 @@
     document.getElementById("variable-search").addEventListener("input", renderOverviewVariables);
     document.getElementById("dataset-filter").addEventListener("change", renderOverviewVariables);
     document.getElementById("artifact-search").addEventListener("input", renderCatalogs);
+    document.getElementById("mapping-edit-button").addEventListener("click", () => {
+      if (mappingEditMode) saveMappingChanges(); else beginMappingEdit();
+    });
     document.getElementById("source-modal-close").addEventListener("click", closeSourceModal);
     document.querySelector("[data-source-modal-close]").addEventListener("click", closeSourceModal);
     document.addEventListener("keydown", event => {
