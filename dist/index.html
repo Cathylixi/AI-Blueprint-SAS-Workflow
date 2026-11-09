@@ -355,11 +355,13 @@
 
     .source-modal[hidden] { display: none; }
     .source-modal {
-      position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 24px;
+      position: fixed; inset: 0; z-index: 100; display: grid; place-items: center;
+      padding: clamp(8px, 2.5vw, 24px); box-sizing: border-box;
     }
     .source-modal-backdrop { position: absolute; inset: 0; background: rgba(9, 31, 48, .62); backdrop-filter: blur(3px); }
     .source-dialog {
-      position: relative; width: min(760px, 100%); max-height: calc(100dvh - 48px); overflow: hidden;
+      position: relative; width: min(1180px, 100%); height: min(920px, 100%); max-width: 100%; max-height: 100%;
+      min-width: 0; overflow: hidden; box-sizing: border-box;
       display: flex; flex-direction: column; background: white; border: 1px solid #c8d6e0; border-radius: 20px;
       box-shadow: 0 28px 80px rgba(6, 31, 49, .3);
     }
@@ -374,7 +376,10 @@
       background: white; color: var(--ink); font-size: 20px; line-height: 1;
     }
     .source-modal-close:hover { background: var(--blue-soft); border-color: #9fc2d6; }
-    .source-dialog-body { padding: 18px 22px 22px; overflow-y: auto; min-height: 0; }
+    .source-dialog-body {
+      width: 100%; min-width: 0; min-height: 0; padding: 18px 22px 22px; overflow-x: hidden; overflow-y: auto;
+      box-sizing: border-box;
+    }
     .source-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 8px; margin-bottom: 16px; }
     .source-fact { min-width: 0; padding: 10px 11px; border: 1px solid var(--line); border-radius: 10px; background: var(--soft); }
     .source-fact span { display: block; color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: .07em; }
@@ -392,19 +397,42 @@
     }
     .source-page-image { display: block; width: 100%; height: auto; background: white; }
     .source-page-image-fallback { padding: 16px; }
-    .source-section-copy { margin: 0 0 12px; color: #35465a; font-family: Georgia, "Times New Roman", serif; font-size: 13px; line-height: 1.6; }
-    .source-table-title { margin: 0 0 10px; font-size: 14px; line-height: 1.35; }
-    .source-table-scroll { width: 100%; overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: white; }
-    .source-table { width: 100%; min-width: 620px; border-collapse: collapse; table-layout: fixed; font-size: 11px; }
-    .source-table.compact { min-width: 0; }
-    .source-table th, .source-table td { padding: 9px 10px; border-right: 1px solid #d7e0e7; border-bottom: 1px solid #d7e0e7; text-align: left; vertical-align: top; line-height: 1.45; }
-    .source-table th:last-child, .source-table td:last-child { border-right: 0; }
-    .source-table tbody tr:last-child td { border-bottom: 0; }
-    .source-table thead th { background: #174e77; color: white; font-weight: 750; text-align: center; }
-    .source-table thead th:first-child { text-align: left; }
-    .source-table tbody td:not(:first-child) { text-align: center; }
-    .source-table .table-group td { background: var(--blue-soft); color: var(--blue); font-weight: 800; text-align: left; }
-    .source-table .table-row-label { font-weight: 700; color: var(--ink); }
+    .sap-continuous-document { display: grid; width: 100%; min-width: 0; gap: 20px; }
+    .sap-document-page { width: 100%; min-width: 0; scroll-margin-top: 12px; }
+    .sap-document-page + .sap-document-page { padding-top: 20px; border-top: 1px solid var(--line); }
+    .sap-document-page-label {
+      margin: 0 0 8px; color: var(--blue-2); font-size: 10px; font-weight: 800;
+      text-transform: uppercase; letter-spacing: .09em;
+    }
+    .sap-structured-page {
+      width: 100%; max-width: 100%; min-width: 0; padding: 20px; border: 1px solid var(--line); border-radius: 12px; background: #fff;
+      overflow: hidden; box-sizing: border-box;
+      color: #26374a; box-shadow: 0 1px 2px rgba(14, 42, 66, .05);
+    }
+    .sap-document-page.is-source-page .sap-structured-page {
+      border-color: #72aed0; box-shadow: 0 0 0 2px rgba(50, 142, 191, .13);
+    }
+    .sap-page-heading { margin: 18px 0 8px; color: var(--ink); font: 750 15px/1.35 Georgia, "Times New Roman", serif; }
+    .sap-page-heading:first-child { margin-top: 0; }
+    .sap-page-paragraph { margin: 0 0 11px; font: 13px/1.62 Georgia, "Times New Roman", serif; }
+    .sap-page-list-item { position: relative; margin: 0 0 7px; padding-left: 17px; font: 13px/1.55 Georgia, "Times New Roman", serif; }
+    .sap-page-list-item::before { content: "•"; position: absolute; left: 2px; color: var(--blue-2); }
+    .sap-page-note { margin: 14px 0 0; padding: 10px 12px; border-left: 3px solid #74aeca; background: var(--blue-soft); font-size: 11px; line-height: 1.5; }
+    .sap-table-section { width: 100%; min-width: 0; margin: 16px 0; }
+    .sap-table-title { margin: 0 0 4px; color: var(--ink); font-size: 13px; line-height: 1.4; }
+    .sap-table-subtitle { margin: 0 0 8px; color: #4f6175; font-size: 10px; line-height: 1.4; }
+    .sap-table-scroll { width: 100%; max-width: 100%; min-width: 0; overflow-x: auto; border: 1px solid #cbd8e1; border-radius: 10px; background: white; box-sizing: border-box; }
+    .sap-source-table { width: 100%; min-width: 0; border-collapse: collapse; table-layout: fixed; font-size: clamp(8px, .85vw, 10px); }
+    .sap-source-table th, .sap-source-table td {
+      min-width: 0; padding: 7px 8px; border-right: 1px solid #d7e0e7; border-bottom: 1px solid #d7e0e7;
+      text-align: left; vertical-align: top; line-height: 1.4; overflow-wrap: anywhere;
+    }
+    .sap-source-table th:last-child, .sap-source-table td:last-child { border-right: 0; }
+    .sap-source-table tr:last-child td { border-bottom: 0; }
+    .sap-source-table thead th { background: #174e77; color: white; font-weight: 750; }
+    .sap-source-table tbody tr:nth-child(even) td { background: #f7fafc; }
+    .sap-source-table td:first-child { font-weight: 650; color: var(--ink); }
+    .sap-empty-page { padding: 24px; color: var(--muted); text-align: center; font-size: 12px; }
 
     @media (max-width: 1100px) {
       .blueprint-page { grid-template-rows: auto auto minmax(0, 1fr); }
@@ -415,9 +443,20 @@
       .sidebar { padding: 16px 11px; }
       .topbar-study select { min-width: 140px; }
       .overview-grid { grid-template-columns: minmax(0, 1fr) 280px; }
-      .source-modal { padding: 12px; }
-      .source-dialog { max-height: calc(100dvh - 24px); border-radius: 16px; }
+      .source-dialog { border-radius: 16px; }
       .source-facts { grid-template-columns: 1fr; }
+      .source-dialog-head { padding: 14px 16px 12px; }
+      .source-dialog-body { padding: 14px 16px 18px; }
+      .sap-structured-page { padding: 14px; }
+      .sap-source-table th, .sap-source-table td { padding: 6px; }
+    }
+    @media (max-width: 540px) {
+      .source-modal { padding: 0; }
+      .source-dialog { width: 100vw; height: 100dvh; max-width: 100vw; max-height: 100dvh; border: 0; border-radius: 0; }
+      .source-dialog-head h2 { font-size: 17px; }
+      .source-dialog-body { padding: 12px; }
+      .sap-structured-page { padding: 10px; border-radius: 9px; }
+      .sap-source-table { font-size: 8px; }
     }
   </style>
 </head>
@@ -646,62 +685,8 @@
     let sessionAddedPairs = new Set();
     let sessionRemovedPairs = new Set();
     let draggedMappingNodeId = null;
-    const structuredSourceTables = {
-      "SAP:3.1": {
-        lead:["Data will be summarized by visit. Non-overlapping intervals are defined so scheduled and actual visit timing can be analyzed consistently."],
-        title:"Table 1. List of Scheduled Visits and Visit Windows",
-        headers:["Scheduled visit", "Visit window for analysis"],
-        compact:true,
-        rows:[
-          ["Day 1", "Day of TUR and EOquin Instillation (Baseline)"],
-          ["Week 3", "Day 2 to Day 55"],
-          ["Month 3", "Day 56 to Day 135"],
-          ["Month 6", "Day 136 to Day 225"],
-          ["Month 9", "Day 226 to Day 315"],
-          ["Month 12", "Day 316 to Day 405"],
-          ["Month 15", "Day 406 to Day 495"],
-          ["Month 18", "Day 496 to Day 585"],
-          ["Month 21", "Day 586 to Day 675"],
-          ["Month 24", "Day 676 to Day 765"]
-        ]
-      },
-      "SAP:5.5.3": {
-        lead:[
-          "The following groups of analyses of primary as well as key secondary efficacy endpoints will be performed in the study.",
-          "1. Intent-to-Treat (ITT) Population\n2. Ta G1-G2 Population\n3. ITT Population — Time from TUR to Instillation: ≤30 minutes; 31–90 minutes; >90 minutes\n4. Ta G1-G2 Population — Time from TUR to Instillation: ≤30 minutes; 31–90 minutes; >90 minutes"
-        ],
-        title:"Table 2. List of Efficacy Analyses by Population and Subgroups",
-        headers:["Endpoints", "ITT", "Ta G1–G2", "Per Protocol", "Ta G3", "Tis, T1 or T2"],
-        rows:[
-          {section:"Primary Endpoint"},
-          ["Recurrence Rate", "Overall\n≤30min; 31–90min\n>90min", "Overall\n≤30min; 31–90min\n>90min", "Overall Only", "Overall Only", "Overall Only"],
-          {section:"Secondary Endpoints"},
-          ["Time to Recurrence", "Overall\n≤30min; 31–90min\n>90min", "Overall\n≤30min; 31–90min\n>90min", "Overall Only", "Overall Only", "Overall Only"],
-          ["Progression Rate", "Overall\n31–90min", "Overall\n31–90min", "Overall Only", "Overall Only", "Overall Only"],
-          ["Time to Progression", "Overall\n31–90min", "Overall\n31–90min", "Overall Only", "Overall Only", "Overall Only"],
-          ["Number of Recurrences", "Overall\n31–90min", "Overall\n31–90min", "Overall Only", "Overall Only", "Overall Only"],
-          ["Overall Survival", "Overall\n31–90min", "Overall\n31–90min", "Overall Only", "Overall Only", "Overall Only"],
-          ["Disease Free Survival", "Overall\n31–90min", "Overall\n31–90min", "Overall Only", "Overall Only", "Overall Only"]
-        ]
-      },
-      "SAP:5.5.4": {
-        lead:["Table 3 provides a list of all analyses of safety to be performed in this study."],
-        title:"Table 3. List of Safety Analyses by Population and Subgroups",
-        headers:["Safety endpoint", "Population / subgroup"],
-        compact:true,
-        rows:[
-          ["Study Duration and Drug Exposure", "Overall\n≤30min\n31–90min\n>90min"],
-          ["Concomitant Medications", "Overall Only"],
-          ["Overall Summary of AEs", "Overall\n≤30min\n31–90min\n>90min"],
-          ["Summary of AEs by SOC and PT", "Overall\n≤30min\n31–90min\n>90min"],
-          ["Summary of Related AEs", "Overall\n31–90min"],
-          ["Summary of AEs by Severity", "Overall\n31–90min"],
-          ["Summary SAEs", "Overall\n31–90min"],
-          ["Summary of Laboratory Tests, Vital Signs, Physical Exam, and Other Safety Measures", "Overall\n31–90min"],
-          ["Functional Bladder Capacity", "Overall\n31–90min"]
-        ]
-      }
-    };
+    let sapContent = {pageCount:0, pages:{}};
+    let SAP_SOURCE_PAGE_COUNT = 67;
 
     function escapeHTML(value) {
       return String(value ?? "").replace(/[&<>'"]/g, character => ({
@@ -1291,16 +1276,6 @@
       focusTarget?.focus();
     }
 
-    function renderStructuredSourceTable(table) {
-      const lead = (table.lead || []).map(paragraph => `<p class="source-section-copy">${escapeHTML(paragraph).replace(/\n/g, "<br>")}</p>`).join("");
-      const header = (table.headers || []).map(value => `<th scope="col">${escapeHTML(value)}</th>`).join("");
-      const body = (table.rows || []).map(row => {
-        if (row?.section) return `<tr class="table-group"><td colspan="${table.headers.length}">${escapeHTML(row.section)}</td></tr>`;
-        return `<tr>${row.map((value, index) => `<td class="${index === 0 ? "table-row-label" : ""}">${escapeHTML(value).replace(/\n/g, "<br>")}</td>`).join("")}</tr>`;
-      }).join("");
-      return `${lead}<h3 class="source-table-title">${escapeHTML(table.title)}</h3><div class="source-table-scroll"><table class="source-table${table.compact ? " compact" : ""}"><thead><tr>${header}</tr></thead><tbody>${body}</tbody></table></div>`;
-    }
-
     function renderCRFSourcePage(node, pageRecord, phrase) {
       if (!node.page) return `<div class="source-page-text source-unavailable">Original CRF page is not available for this node.</div>`;
       const pageNumber = String(node.page).padStart(3, "0");
@@ -1310,27 +1285,74 @@
       return `<div class="source-page-image-wrap"><img class="source-page-image" src="source_pages/crf/page-${pageNumber}.jpg" alt="Original annotated CRF page ${escapeHTML(node.page)}" data-fallback="${escapeHTML(fallback)}"></div>`;
     }
 
+    function renderSAPTable(block) {
+      const rows = Array.isArray(block.rows) ? block.rows : [];
+      const columnCount = Math.max(1, ...rows.map(row => row.length));
+      const headerCount = Math.min(rows.length, Math.max(0, Number(block.headerRows) || 0));
+      const renderRow = (row, header = false) => {
+        const tag = header ? "th" : "td";
+        const normalized = [...row, ...Array(Math.max(0, columnCount - row.length)).fill("")];
+        return `<tr>${normalized.map(cell => `<${tag}${header ? ' scope="col"' : ""}>${escapeHTML(cell)}</${tag}>`).join("")}</tr>`;
+      };
+      return `<section class="sap-table-section">
+        ${block.title ? `<h3 class="sap-table-title">${escapeHTML(block.title)}</h3>` : ""}
+        ${block.subtitle ? `<p class="sap-table-subtitle">${escapeHTML(block.subtitle)}</p>` : ""}
+        <div class="sap-table-scroll"><table class="sap-source-table">
+          ${headerCount ? `<thead>${rows.slice(0, headerCount).map(row => renderRow(row, true)).join("")}</thead>` : ""}
+          <tbody>${rows.slice(headerCount).map(row => renderRow(row)).join("")}</tbody>
+        </table></div>
+      </section>`;
+    }
+
+    function renderSAPBlock(block) {
+      if (block.kind === "heading") return `<h3 class="sap-page-heading">${escapeHTML(block.text)}</h3>`;
+      if (block.kind === "paragraph") return `<p class="sap-page-paragraph">${escapeHTML(block.text)}</p>`;
+      if (block.kind === "listItem") return `<div class="sap-page-list-item">${escapeHTML(block.text)}</div>`;
+      if (block.kind === "note") return `<aside class="sap-page-note">${escapeHTML(block.text)}</aside>`;
+      if (block.kind === "table") return renderSAPTable(block);
+      return "";
+    }
+
+    function renderSAPPageContent(pageNumber) {
+      const page = sapContent.pages?.[String(pageNumber)];
+      if (!page) return `<div class="sap-empty-page">Structured content is not available for this page.</div>`;
+      const content = (page.blocks || []).map(renderSAPBlock).join("");
+      return content || `<div class="sap-empty-page">This source page does not contain extractable text or table content.</div>`;
+    }
+
+    function renderSAPSourceDocument(node) {
+      const sourcePage = Math.min(SAP_SOURCE_PAGE_COUNT, Math.max(1, Number(node.page) || 1));
+      const pages = Array.from({length: SAP_SOURCE_PAGE_COUNT}, (_, index) => index + 1);
+      return `<article class="sap-continuous-document" aria-label="Continuous structured SAP document">
+        ${pages.map(pageNumber => `
+          <section id="sap-page-${pageNumber}" class="sap-document-page${pageNumber === sourcePage ? " is-source-page" : ""}" data-sap-page="${pageNumber}"${pageNumber === sourcePage ? ' aria-current="true"' : ""}>
+            <div class="sap-document-page-label">Page ${pageNumber}</div>
+            <div class="sap-structured-page" aria-label="Structured SAP page ${pageNumber}">${renderSAPPageContent(pageNumber)}</div>
+          </section>`).join("")}
+      </article>`;
+    }
+
     function openSourceModal(item) {
       const node = item?.sourceNode;
       if (!node || !sourceModalStages.has(node.stage)) return;
       const documentRecord = sourceDetails.documents?.[node.source_file];
       const pageRecord = documentRecord?.pages?.[String(node.page)];
-      const structuredTable = structuredSourceTables[item.nodeId];
       const phrase = node.stage === "CRF" ? (node.label || node.annotation) : node.label;
       const facts = sourceFactsForNode(node);
       const isCRFPage = node.stage === "CRF";
-      const contentLabel = isCRFPage ? "Original annotated CRF page" : (structuredTable ? "Structured source content" : "Source page content");
+      const isSAPPage = node.stage === "SAP";
+      const contentLabel = isCRFPage ? "Original annotated CRF page" : (isSAPPage ? "SAP source content" : "Source page content");
       const sourceContent = isCRFPage
         ? renderCRFSourcePage(node, pageRecord, phrase)
-        : (structuredTable
-          ? renderStructuredSourceTable(structuredTable)
+        : (isSAPPage
+          ? renderSAPSourceDocument(node)
           : `<div class="source-page-text${pageRecord?.content ? "" : " source-unavailable"}">${pageRecord?.content ? highlight(pageRecord.content, phrase) : "Source page text is not available for this node."}</div>`);
       document.getElementById("source-modal-layer").textContent = `${node.stage} source`;
       document.getElementById("source-modal-title").textContent = registryNodeTitle(node);
       document.getElementById("source-modal-ref").textContent = `${node.source_file || "Source document"}${node.anchor ? ` · ${node.anchor}` : ""}`;
       document.getElementById("source-modal-body").innerHTML = `
         <div class="source-facts">
-          ${facts.map(([label, value]) => `<div class="source-fact"><span>${escapeHTML(label)}</span><strong>${escapeHTML(value)}</strong></div>`).join("")}
+          ${facts.map(([label, value]) => `<div class="source-fact" data-source-fact="${escapeHTML(label)}"><span>${escapeHTML(label)}</span><strong>${escapeHTML(value)}</strong></div>`).join("")}
         </div>
         <p class="source-content-label">${contentLabel}</p>
         ${sourceContent}`;
@@ -1345,6 +1367,12 @@
       const modal = document.getElementById("source-modal");
       modal.hidden = false;
       modal.setAttribute("aria-hidden", "false");
+      if (isSAPPage) {
+        const sourcePage = Math.min(SAP_SOURCE_PAGE_COUNT, Math.max(1, Number(node.page) || 1));
+        requestAnimationFrame(() => {
+          document.querySelector(`[data-sap-page="${sourcePage}"]`)?.scrollIntoView({block:"start"});
+        });
+      }
       document.getElementById("source-modal-close").focus();
     }
 
@@ -1607,17 +1635,21 @@
 
     async function loadMetadata() {
       try {
-        const [response, registryResponse, sourceResponse] = await Promise.all([
+        const [response, registryResponse, sourceResponse, sapResponse] = await Promise.all([
           fetch("metadata.json", {cache:"no-cache"}),
           fetch("connection_registry.json", {cache:"no-cache"}),
-          fetch("source_details.json", {cache:"no-cache"})
+          fetch("source_details.json", {cache:"no-cache"}),
+          fetch("sap_content.json", {cache:"no-cache"})
         ]);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         if (!registryResponse.ok) throw new Error(`Connection registry HTTP ${registryResponse.status}`);
         if (!sourceResponse.ok) throw new Error(`Source details HTTP ${sourceResponse.status}`);
+        if (!sapResponse.ok) throw new Error(`SAP content HTTP ${sapResponse.status}`);
         const payload = await response.json();
         connectionRegistry = await registryResponse.json();
         sourceDetails = await sourceResponse.json();
+        sapContent = await sapResponse.json();
+        SAP_SOURCE_PAGE_COUNT = Number(sapContent.pageCount) || 67;
         if (!Array.isArray(payload.records)) throw new Error("Metadata records are missing");
         if (!Array.isArray(connectionRegistry.nodes) || !Array.isArray(connectionRegistry.connections)) throw new Error("Connection registry is missing");
         originalConnectionPairs = new Set(connectionRegistry.connections.map(connection => connectionPairKey(connection.from_node_id, connection.to_node_id)));
