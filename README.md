@@ -1,6 +1,11 @@
 # Clinical Blueprint — SPI-611 MVP
 
-**Live website:** https://cathylixi.github.io/AI-Blueprint-SAS-Workflow/
+**Live application (Azure):** [Open Clinical Blueprint](https://clinical-blueprint-mvp.delightfuldesert-f5bbaa56.eastus.azurecontainerapps.io/)
+
+Sign in with your authorized company Microsoft account. The Azure application
+includes the AI Chatbot and saves approved relationship changes to the database.
+
+**Static demo (GitHub Pages):** [Open static preview](https://cathylixi.github.io/AI-Blueprint-SAS-Workflow/)
 
 Interactive traceability prototype connecting protocol sections, aCRF fields,
 raw metadata, SDTM annotations, ADaM variables, SAP rules, and output shells.
